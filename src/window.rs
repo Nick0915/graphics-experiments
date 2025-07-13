@@ -87,9 +87,12 @@ impl Window {
         }
     }
 
-    pub fn update(&mut self) {
+    pub fn process_input(&mut self) {
         self.glfw.poll_events();
         self.process_events();
+    }
+
+    pub fn draw(&mut self) {
         self.window_handle.swap_buffers();
     }
 
