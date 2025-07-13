@@ -17,7 +17,7 @@ impl VAO {
 
             let num_attrs = attr_layout.len();
 
-            let stride = attr_layout.iter().sum::<u32>() as i32;
+            let stride = attr_layout.iter().sum::<u32>() * std::mem::size_of::<T>() as u32;
 
             let mut offset = 0;
             for index in 0..attr_layout.len() {
@@ -30,7 +30,7 @@ impl VAO {
                     size as i32,
                     r#type,
                     gl::FALSE,
-                    stride,
+                    stride as i32,
                     pointer
                 );
 

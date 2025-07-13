@@ -19,10 +19,10 @@ fn main() {
 
     #[rustfmt::skip]
     let vertices: [f32; 8] = [
-        -1.0,  1.0, // 0: top-left pos, uv
-        -1.0, -1.0, // 1: bottom-left pos, uv
-         1.0, -1.0, // 2: bottom-right pos, uv
-         1.0,  1.0, // 3: top-right pos, uv
+        -1.,  1., // 0: top-left pos, uv
+        -1., -1., // 1: bottom-left pos, uv
+         1., -1., // 2: bottom-right pos, uv
+         1.,  1., // 3: top-right pos, uv
     ];
 
     // 2 floats for position (x, y) then two floats for uv (s, t)
@@ -30,8 +30,8 @@ fn main() {
 
     #[rustfmt::skip]
     let indices: [u8; 4] = [
-        1, 3, 0,    // bottom-left tri
-        3,          // top-left tri
+        0, 1, 3,    // bottom-left tri
+        2,          // top-left tri
     ];
 
     let mut vertex_buffer = buffer::BufferObject::new(gl::ARRAY_BUFFER, gl::STATIC_DRAW);
@@ -66,7 +66,7 @@ fn main() {
         window.process_input();
 
         unsafe {
-            gl::PolygonMode(gl::FRONT_AND_BACK, gl::LINE);
+            // gl::PolygonMode(gl::FRONT_AND_BACK, gl::LINE);
             gl::Clear(gl::COLOR_BUFFER_BIT);
 
             vertex_array.bind();
