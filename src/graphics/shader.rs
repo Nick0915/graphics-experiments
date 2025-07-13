@@ -94,4 +94,16 @@ impl ShaderProgram {
 
         Self { id: prog_id }
     }
+
+    pub fn r#use(self) {
+        unsafe {
+            gl::UseProgram(self.id);
+        }
+    }
+
+    pub fn unuse(self) {
+        unsafe {
+            gl::UseProgram(0);
+        }
+    }
 }
