@@ -95,15 +95,31 @@ impl ShaderProgram {
         Self { id: prog_id }
     }
 
-    pub fn r#use(self) {
+    pub fn r#use(&self) {
         unsafe {
             gl::UseProgram(self.id);
         }
     }
 
-    pub fn unuse(self) {
+    pub fn unuse(&self) {
         unsafe {
             gl::UseProgram(0);
+        }
+    }
+
+    pub fn uniform1f(&self, uniform_name: &str, value: f32) {
+        unsafe {
+            let name = CString::new(uniform_name).unwrap();
+            let uniform_location = gl::GetUniformLocation(self.id, name.as_ptr());
+            gl::Uniform1f(uniform_location, value);
+        }
+    }
+
+    pub fn uniform2f(&self, uniform_name: &str, values: (f32, f32)) {
+        unsafe {
+            let name = CString::new(uniform_name).unwrap();
+            let uniform_location = gl::GetUniformLocation(self.id, name.as_ptr());
+            gl::Uniform2f(uniform_location, values.0, values.1);
         }
     }
 }

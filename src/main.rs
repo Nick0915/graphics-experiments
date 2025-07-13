@@ -5,17 +5,20 @@ use log;
 use dotenv;
 use std;
 
-use crate::{graphics::*, util::constants};
-
 mod util;
 mod graphics;
 mod window;
+mod camera2d;
+mod input;
+mod constants;
 
 fn main() {
     dotenv::dotenv().ok();
     env_logger::init();
 
-    let mut window = window::Window::init();
+    let mut window = window::Window::new();
+    let mut input_state = input::InputState::new();
+    let mut camera = camera2d::Camera2D::new();
 
     #[rustfmt::skip]
     let vertices: [f32; 8] = [
@@ -34,21 +37,21 @@ fn main() {
         2,          // top-left tri
     ];
 
-    let mut vertex_buffer = buffer::BufferObject::new(gl::ARRAY_BUFFER, gl::STATIC_DRAW);
+    let mut vertex_buffer = graphics::BufferObject::new(gl::ARRAY_BUFFER, gl::STATIC_DRAW);
     vertex_buffer.bind();
     vertex_buffer.buffer_data(&vertices);
 
-    let mut element_buffer = buffer::BufferObject::new(gl::ELEMENT_ARRAY_BUFFER, gl::STATIC_DRAW);
+    let mut element_buffer = graphics::BufferObject::new(gl::ELEMENT_ARRAY_BUFFER, gl::STATIC_DRAW);
     element_buffer.bind();
     element_buffer.buffer_data(&indices);
 
-    let mut vertex_array = vao::VAO::new(vertex_layout, gl::FLOAT, &vertices);
+    let mut vertex_array = graphics::VAO::new(vertex_layout, gl::FLOAT, &vertices);
     vertex_array.bind();
 
     let vertex_source = include_str!("../shader/main.vert");
     let fragment_source = include_str!("../shader/main.frag");
 
-    let program = shader::ShaderProgram::new(
+    let program = graphics::ShaderProgram::new(
         vertex_source, fragment_source
     );
     program.r#use();
@@ -62,8 +65,22 @@ fn main() {
         );
     }
 
+    let mut u_loc_resolution = 0;
+    let mut u_loc_zoom = 0;
+    let mut u_loc_pan = 0;
+
     while !window.should_close() {
-        window.process_input();
+        input_state.update();
+        window.process_input(&mut input_state);
+        camera.pan(input_state.drag_amount);
+        camera.zoom(input_state.vertical_scroll);
+
+
+        // updating uniforms
+        let scale = window.width().min(window.height());
+        program.uniform2f("u_resolution", (scale as f32, scale as f32));
+        program.uniform2f("u_pan", camera.position);
+        program.uniform1f("u_zoom", camera.zoom);
 
         unsafe {
             // gl::PolygonMode(gl::FRONT_AND_BACK, gl::LINE);

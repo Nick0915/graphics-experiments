@@ -1,3 +1,3 @@
 pub mod error;
-pub mod constants;
-pub mod callback;
+
+pub use error::*;

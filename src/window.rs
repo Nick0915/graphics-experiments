@@ -1,7 +1,7 @@
 use gl;
 use glfw::{self, Context, WindowEvent};
 
-use crate::util;
+use crate::*;
 
 pub struct Window {
     glfw: glfw::Glfw,
@@ -13,7 +13,7 @@ pub struct Window {
 }
 
 impl Window {
-    pub fn init() -> Window {
+    pub fn new() -> Window {
         let mut glfw = glfw::init(util::error::error_callback).expect("Couldn't initialize GLFW!");
 
         glfw.window_hint(glfw::WindowHint::ContextVersion(4, 6));
@@ -22,9 +22,9 @@ impl Window {
         ));
         let (mut window, events) = glfw
             .create_window(
-                util::constants::WINDOW_SIZE.0,
-                util::constants::WINDOW_SIZE.1,
-                util::constants::WINDOW_TITLE,
+                constants::WINDOW_SIZE.0,
+                constants::WINDOW_SIZE.1,
+                constants::WINDOW_TITLE,
                 glfw::WindowMode::Windowed,
             )
             .expect("Failed to create window!");
@@ -37,19 +37,20 @@ impl Window {
             gl::Viewport(
                 0,
                 0,
-                util::constants::WINDOW_SIZE.0 as i32,
-                util::constants::WINDOW_SIZE.1 as i32,
+                constants::WINDOW_SIZE.0 as i32,
+                constants::WINDOW_SIZE.1 as i32,
             );
         }
-        glfw.set_swap_interval(glfw::SwapInterval::None);
+        // glfw.set_swap_interval(glfw::SwapInterval::None);
+        glfw.set_swap_interval(glfw::SwapInterval::Sync(1));
 
         Window {
             glfw,
             window_handle: window,
             events,
-            width: util::constants::WINDOW_SIZE.0,
-            height: util::constants::WINDOW_SIZE.1,
-            title: util::constants::WINDOW_TITLE.to_string(),
+            width: constants::WINDOW_SIZE.0,
+            height: constants::WINDOW_SIZE.1,
+            title: constants::WINDOW_TITLE.to_string(),
         }
     }
 
@@ -61,8 +62,7 @@ impl Window {
         self.window_handle.should_close()
     }
 
-    pub fn process_events(&mut self) {
-        use util::callback::*;
+    pub fn process_events(&mut self, input_state: &mut input::InputState) {
         for (_, event) in glfw::flush_messages(&self.events) {
             match event {
                 WindowEvent::Close => self.window_handle.set_should_close(true),
@@ -75,21 +75,21 @@ impl Window {
                     }
                 }
                 WindowEvent::MouseButton(mouse_button, action, modifiers) => {
-                    mouse_button_callback(&mut self.window_handle, mouse_button, action, modifiers);
+                    input::mouse_button_callback(&mut self.window_handle, mouse_button, action, modifiers, input_state);
                 }
-                WindowEvent::CursorPos(x, y) => cursor_pos_callback(&mut self.window_handle, x, y),
-                WindowEvent::Scroll(x, y) => scroll_callback(&mut self.window_handle, x, y),
+                WindowEvent::CursorPos(x, y) => input::cursor_pos_callback(&mut self.window_handle, x, y, input_state),
+                WindowEvent::Scroll(x, y) => input::scroll_callback(&mut self.window_handle, x, y, input_state),
                 WindowEvent::Key(key, scancode, action, modifiers) => {
-                    key_callback(&mut self.window_handle, key, scancode, action, modifiers);
+                    input::key_callback(&mut self.window_handle, key, scancode, action, modifiers, input_state);
                 }
                 _ => {}
             }
         }
     }
 
-    pub fn process_input(&mut self) {
+    pub fn process_input(&mut self, input_state: &mut input::InputState) {
         self.glfw.poll_events();
-        self.process_events();
+        self.process_events(input_state);
     }
 
     pub fn draw(&mut self) {
