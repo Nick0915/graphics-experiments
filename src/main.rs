@@ -1,5 +1,8 @@
+#![allow(unused)]
+
 use gl::{self, types::*};
 use log;
+use dotenv;
 use std;
 
 use crate::{graphics::*, util::constants};
@@ -9,6 +12,9 @@ mod graphics;
 mod window;
 
 fn main() {
+    dotenv::dotenv().ok();
+    env_logger::init();
+
     let mut window = window::Window::init();
 
     #[rustfmt::skip]
@@ -38,6 +44,13 @@ fn main() {
     let mut element_buffer = buffer::BufferObject::new(gl::ELEMENT_ARRAY_BUFFER, gl::STATIC_DRAW);
     element_buffer.bind();
     element_buffer.buffer_data(&indices);
+
+    let vertex_source = include_str!("../shader/main.vert");
+    let fragment_source = include_str!("../shader/main.frag");
+
+    let program = shader::ShaderProgram::new(
+        vertex_source, fragment_source
+    );
 
     unsafe {
         gl::ClearColor(
