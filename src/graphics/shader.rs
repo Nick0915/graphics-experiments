@@ -108,27 +108,39 @@ impl ShaderProgram {
         }
     }
 
+    fn get_uniform_loc(&self, uniform_name: &str) -> i32 {
+        let name = CString::new(uniform_name).unwrap();
+        let mut uniform_location: i32 = 0;
+
+        unsafe {
+            uniform_location = gl::GetUniformLocation(self.id, name.as_ptr());
+        }
+
+        if uniform_location < 0 {
+            log::error!("uniform \"{}\" location couldn't be found", uniform_name)
+        }
+
+        uniform_location
+    }
+
     pub fn uniform1f(&self, uniform_name: &str, value: f32) {
         unsafe {
-            let name = CString::new(uniform_name).unwrap();
-            let uniform_location = gl::GetUniformLocation(self.id, name.as_ptr());
-            gl::Uniform1f(uniform_location, value);
+            let loc = self.get_uniform_loc(uniform_name);
+            gl::Uniform1f(loc, value);
         }
     }
 
     pub fn uniform2f(&self, uniform_name: &str, values: (f32, f32)) {
         unsafe {
-            let name = CString::new(uniform_name).unwrap();
-            let uniform_location = gl::GetUniformLocation(self.id, name.as_ptr());
-            gl::Uniform2f(uniform_location, values.0, values.1);
+            let loc = self.get_uniform_loc(uniform_name);
+            gl::Uniform2f(loc, values.0, values.1);
         }
     }
 
     pub fn uniform_matrix4f(&self, uniform_name: &str, matrix_ptr: &f32) {
         unsafe {
-            let name = CString::new(uniform_name).unwrap();
-            let uniform_location = gl::GetUniformLocation(self.id, name.as_ptr());
-            gl::UniformMatrix4fv(uniform_location, 1, gl::FALSE, matrix_ptr);
+            let loc = self.get_uniform_loc(uniform_name);
+            gl::UniformMatrix4fv(loc, 1, gl::FALSE, matrix_ptr);
         }
     }
 }

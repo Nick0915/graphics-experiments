@@ -27,25 +27,28 @@ fn main() {
         (0.1, 1000.)
     );
 
-    // let mut vertex_buffer = graphics::BufferObject::new(gl::ARRAY_BUFFER, gl::STATIC_DRAW);
-    // vertex_buffer.bind();
-    // vertex_buffer.buffer_data(&vertices);
+    #[rustfmt::skip]
+    let vertices = vec![
+        -0.5, 0.,  0.5, // 0: back-left
+         0.5, 0.,  0.5, // 1: back-right
+         0.5, 0., -0.5, // 2: front-right
+        -0.5, 0., -0.5, // 3: front-left
+    ];
 
-    // let mut element_buffer = graphics::BufferObject::new(gl::ELEMENT_ARRAY_BUFFER, gl::STATIC_DRAW);
-    // element_buffer.bind();
-    // element_buffer.buffer_data(&indices);
-
-    // let mut vertex_array = graphics::VAO::new(vertex_layout, gl::FLOAT, &vertices);
-    // vertex_array.bind();
+    #[rustfmt::skip]
+    let indices = vec![
+        3, 0, 1
+    ];
 
     let vertex_source = include_str!("../shader/main.vert");
     let fragment_source = include_str!("../shader/main.frag");
 
-    let program = graphics::ShaderProgram::new(
+    let shader_program = graphics::ShaderProgram::new(
         vertex_source, fragment_source
     );
 
-    let cube_mesh = graphics::Mesh::from_obj(include_str!("../models/cube.obj"), program);
+    // let cube_mesh = graphics::Mesh::from_obj(include_str!("../models/cube.obj"), program);
+    let plane_mesh = graphics::Mesh::from_list(vertices, indices, shader_program);
 
     unsafe {
         gl::ClearColor(
@@ -67,13 +70,13 @@ fn main() {
         // camera.zoom(input_state.vertical_scroll);
 
         let mvp = camera.view().mul_mat4(&camera.projection());
-        program.uniform_matrix4f("u_MVP", &mvp.to_cols_array()[0]);
+        shader_program.uniform_matrix4f("u_MVP", &mvp.to_cols_array()[0]);
 
         unsafe {
             // gl::PolygonMode(gl::FRONT_AND_BACK, gl::LINE);
             gl::Clear(gl::COLOR_BUFFER_BIT);
 
-            cube_mesh.draw();
+            plane_mesh.draw();
 
             // vertex_array.bind();
             // vertex_buffer.bind();
