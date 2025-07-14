@@ -8,7 +8,7 @@ pub struct VAO {
 }
 
 impl VAO {
-    pub fn new<T>(attr_layout: Vec<u32>, r#type: GLenum, data: &[T]) -> Self {
+    pub fn new<T>(attr_layout: Vec<u32>, r#type: GLenum, data: &Vec<T>) -> Self {
         let mut id = 0;
 
         unsafe {

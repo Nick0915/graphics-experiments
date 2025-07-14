@@ -33,7 +33,7 @@ impl BufferObject {
         }
     }
 
-    pub fn buffer_data<T>(&mut self, data: &[T]) {
+    pub fn buffer_data<T>(&mut self, data: &Vec<T>) {
         self.bind();
         unsafe {
             gl::BufferData(

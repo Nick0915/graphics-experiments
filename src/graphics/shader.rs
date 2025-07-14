@@ -2,6 +2,7 @@ use std::ffi::CString;
 
 use gl::types::*;
 
+#[derive(Copy, Clone)]
 pub struct ShaderProgram {
     id: u32,
 }
@@ -120,6 +121,14 @@ impl ShaderProgram {
             let name = CString::new(uniform_name).unwrap();
             let uniform_location = gl::GetUniformLocation(self.id, name.as_ptr());
             gl::Uniform2f(uniform_location, values.0, values.1);
+        }
+    }
+
+    pub fn uniform_matrix4f(&self, uniform_name: &str, matrix_ptr: &f32) {
+        unsafe {
+            let name = CString::new(uniform_name).unwrap();
+            let uniform_location = gl::GetUniformLocation(self.id, name.as_ptr());
+            gl::UniformMatrix4fv(uniform_location, 1, gl::FALSE, matrix_ptr);
         }
     }
 }

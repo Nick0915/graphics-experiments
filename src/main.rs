@@ -8,7 +8,7 @@ use std;
 mod util;
 mod graphics;
 mod window;
-mod camera2d;
+mod camera;
 mod input;
 mod constants;
 
@@ -18,35 +18,25 @@ fn main() {
 
     let mut window = window::Window::new();
     let mut input_state = input::InputState::new();
-    let mut camera = camera2d::Camera2D::new();
+    // let mut camera = camera::Camera2D::new();
+    let mut camera = camera::Camera3D::new(
+        (5., 0., -5.),
+        (0., 0., 0.),
+        0.785398,
+        (constants::WINDOW_SIZE.0 as f32, constants::WINDOW_SIZE.1 as f32),
+        (0.1, 1000.)
+    );
 
-    #[rustfmt::skip]
-    let vertices: [f32; 8] = [
-        -1.,  1., // 0: top-left pos, uv
-        -1., -1., // 1: bottom-left pos, uv
-         1., -1., // 2: bottom-right pos, uv
-         1.,  1., // 3: top-right pos, uv
-    ];
+    // let mut vertex_buffer = graphics::BufferObject::new(gl::ARRAY_BUFFER, gl::STATIC_DRAW);
+    // vertex_buffer.bind();
+    // vertex_buffer.buffer_data(&vertices);
 
-    // 2 floats for position (x, y) then two floats for uv (s, t)
-    let vertex_layout = vec![2];
+    // let mut element_buffer = graphics::BufferObject::new(gl::ELEMENT_ARRAY_BUFFER, gl::STATIC_DRAW);
+    // element_buffer.bind();
+    // element_buffer.buffer_data(&indices);
 
-    #[rustfmt::skip]
-    let indices: [u8; 4] = [
-        0, 1, 3,    // bottom-left tri
-        2,          // top-left tri
-    ];
-
-    let mut vertex_buffer = graphics::BufferObject::new(gl::ARRAY_BUFFER, gl::STATIC_DRAW);
-    vertex_buffer.bind();
-    vertex_buffer.buffer_data(&vertices);
-
-    let mut element_buffer = graphics::BufferObject::new(gl::ELEMENT_ARRAY_BUFFER, gl::STATIC_DRAW);
-    element_buffer.bind();
-    element_buffer.buffer_data(&indices);
-
-    let mut vertex_array = graphics::VAO::new(vertex_layout, gl::FLOAT, &vertices);
-    vertex_array.bind();
+    // let mut vertex_array = graphics::VAO::new(vertex_layout, gl::FLOAT, &vertices);
+    // vertex_array.bind();
 
     let vertex_source = include_str!("../shader/main.vert");
     let fragment_source = include_str!("../shader/main.frag");
@@ -54,7 +44,8 @@ fn main() {
     let program = graphics::ShaderProgram::new(
         vertex_source, fragment_source
     );
-    program.r#use();
+
+    let cube_mesh = graphics::Mesh::from_obj(include_str!("../models/cube.obj"), program);
 
     unsafe {
         gl::ClearColor(
@@ -72,30 +63,28 @@ fn main() {
     while !window.should_close() {
         input_state.update();
         window.process_input(&mut input_state);
-        camera.pan(input_state.drag_amount);
-        camera.zoom(input_state.vertical_scroll);
+        // camera.pan(input_state.drag_amount);
+        // camera.zoom(input_state.vertical_scroll);
 
-
-        // updating uniforms
-        let scale = window.width().min(window.height());
-        program.uniform2f("u_resolution", (scale as f32, scale as f32));
-        program.uniform2f("u_pan", camera.position);
-        program.uniform1f("u_zoom", camera.zoom);
+        let mvp = camera.view().mul_mat4(&camera.projection());
+        program.uniform_matrix4f("u_MVP", &mvp.to_cols_array()[0]);
 
         unsafe {
             // gl::PolygonMode(gl::FRONT_AND_BACK, gl::LINE);
             gl::Clear(gl::COLOR_BUFFER_BIT);
 
-            vertex_array.bind();
-            vertex_buffer.bind();
-            element_buffer.bind();
-            gl::DrawElements(gl::TRIANGLE_STRIP, 4, gl::UNSIGNED_BYTE, std::mem::transmute(0i64));
+            cube_mesh.draw();
+
+            // vertex_array.bind();
+            // vertex_buffer.bind();
+            // element_buffer.bind();
+            // gl::DrawElements(gl::TRIANGLE_STRIP, 4, gl::UNSIGNED_BYTE, std::mem::transmute(0i64));
         }
 
         window.draw();
     }
 
-    vertex_array.free();
-    vertex_buffer.free();
-    element_buffer.free();
+    // vertex_array.free();
+    // vertex_buffer.free();
+    // element_buffer.free();
 }
