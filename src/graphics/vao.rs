@@ -22,16 +22,15 @@ impl VAO {
             let mut offset = 0;
             for index in 0..attr_layout.len() {
                 let size = attr_layout[index];
-                // let pointer = mem::transmute(&data[offset]);
-                // let pointer = std::ptr::null();
 
+                #[rustfmt::skip]
                 gl::VertexAttribPointer(
-                    index as u32,
-                    size as i32,
-                    r#type,
-                    gl::FALSE,
-                    stride as i32,
-                    (offset * mem::size_of::<T>()) as *const _
+                    index as u32,                                   // the N in layout (location = N)
+                    size as i32,                                    // size (in quantity) of the data (vec3 -> 3 floats, so size = 3)
+                    r#type,                                         // type of the data (vec3 uses floats, so gl::FLOAT)
+                    gl::FALSE,                                      // normalized?
+                    stride as i32,                                  // # of bytes between each new vertex (not to next attribute in the same vertex)
+                    (offset * mem::size_of::<T>()) as *const _      // offset (in bytes) to the first instance of this attr in the array (casted to a pointer)
                 );
                 gl::EnableVertexArrayAttrib(id, index as u32);
 
@@ -39,7 +38,11 @@ impl VAO {
             }
         }
 
-        Self { id, attr_layout, r#type }
+        Self {
+            id,
+            attr_layout,
+            r#type,
+        }
     }
 
     pub fn bind(&self) {

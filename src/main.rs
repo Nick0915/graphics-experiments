@@ -20,9 +20,8 @@ fn main() {
 
     let mut window = window::Window::new();
     let mut input_state = input::InputState::new();
-    // let mut camera = camera::Camera2D::new();
     // let mut camera = camera::Camera3D::new(
-    //     (5., 0., -5.),
+    //     (0., 2., -5.),
     //     (0., 0., 0.),
     //     0.785398,
     //     (constants::WINDOW_SIZE.0 as f32, constants::WINDOW_SIZE.1 as f32),
@@ -39,8 +38,8 @@ fn main() {
 
     #[rustfmt::skip]
     let indices: Vec<u32> = vec![
-        0, 1, 3,    // bottom-left tri
-        3, 1, 2     // top-left tri
+        0, 1, 3,    // top-left tri
+        3, 2, 1     // bottom-right tri
     ];
 
     let vertex_source = include_str!("../shader/main.vert");
@@ -67,42 +66,6 @@ fn main() {
         }
     }
 
-    // let mut vbo = 0u32;
-    // let mut vao = 0u32;
-    // let mut ebo = 0u32;
-    // unsafe {
-    //     gl::GenVertexArrays(1, &mut vao);
-    //     gl::BindVertexArray(vao);
-
-    //     gl::GenBuffers(1, &mut ebo);
-    //     gl::BindBuffer(gl::ELEMENT_ARRAY_BUFFER, ebo);
-    //     gl::BufferData(
-    //         gl::ELEMENT_ARRAY_BUFFER,
-    //         (std::mem::size_of::<u32>() * indices.len()) as isize,
-    //         std::mem::transmute(&indices[0]),
-    //         gl::STATIC_DRAW
-    //     );
-
-    //     gl::GenBuffers(1, &mut vbo);
-    //     gl::BindBuffer(gl::ARRAY_BUFFER, vbo);
-    //     gl::BufferData(
-    //         gl::ARRAY_BUFFER,
-    //         (std::mem::size_of::<f32>() * vertices.len()) as isize,
-    //         std::mem::transmute(&vertices[0]),
-    //         gl::STATIC_DRAW,
-    //     );
-
-    //     gl::VertexAttribPointer(
-    //         0,
-    //         2,
-    //         gl::FLOAT,
-    //         gl::FALSE,
-    //         (2 * std::mem::size_of::<f32>()) as i32,
-    //         std::mem::transmute(&vertices[0])
-    //     );
-    //     gl::EnableVertexAttribArray(0);
-    // }
-
     unsafe {
         gl::ClearColor(
             constants::CLEAR_COLOR.0,
@@ -123,7 +86,9 @@ fn main() {
         // camera.zoom(input_state.vertical_scroll);
 
         // let mvp = camera.view().mul_mat4(&camera.projection());
-        // shader_program.uniform_matrix4f("u_MVP", &mvp.to_cols_array()[0]);
+        // println!("{}", mvp);
+        let mvp = glam::Mat4::IDENTITY;
+        shader_program.uniform_matrix4f("u_MVP", &mvp.to_cols_array()[0]);
 
         unsafe {
             // gl::PolygonMode(gl::FRONT_AND_BACK, gl::LINE);
