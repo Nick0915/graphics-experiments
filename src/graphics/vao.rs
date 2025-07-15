@@ -1,5 +1,5 @@
 use gl::{self, types::*};
-use std::mem;
+use std::{mem, os::raw::c_void};
 
 pub struct VAO {
     id: u32,
@@ -22,8 +22,8 @@ impl VAO {
             let mut offset = 0;
             for index in 0..attr_layout.len() {
                 let size = attr_layout[index];
-                let pointer = mem::transmute(&data[offset]);
-                offset += attr_layout[index] as usize;
+                // let pointer = mem::transmute(&data[offset]);
+                // let pointer = std::ptr::null();
 
                 gl::VertexAttribPointer(
                     index as u32,
@@ -31,10 +31,11 @@ impl VAO {
                     r#type,
                     gl::FALSE,
                     stride as i32,
-                    pointer
+                    (offset * mem::size_of::<T>()) as *const _
                 );
-
                 gl::EnableVertexArrayAttrib(id, index as u32);
+
+                offset += attr_layout[index] as usize;
             }
         }
 
