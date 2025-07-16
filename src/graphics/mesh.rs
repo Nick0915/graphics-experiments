@@ -13,6 +13,10 @@ pub struct Mesh {
 impl Mesh {
     /// builds a mesh from a list of vertices, indices, an attribute layout scheme, and a shader program
     pub fn from_list(vertices: Vec<f32>, attr_layout: Vec<u32>, indices: Vec<u32>, shader_program: graphics::ShaderProgram) -> Self {
+        // create VAO
+        let mut vertex_array = graphics::VAO::new(gl::FLOAT);
+        vertex_array.bind();
+
         // create IBO
         let mut index_buffer = graphics::BufferObject::new(gl::ELEMENT_ARRAY_BUFFER, gl::STATIC_DRAW);
         index_buffer.bind();
@@ -23,9 +27,8 @@ impl Mesh {
         vertex_buffer.bind();
         vertex_buffer.buffer_data(&vertices);
 
-        // create VAO
-        let mut vertex_array = graphics::VAO::new::<f32>(attr_layout, gl::FLOAT);
-        vertex_array.bind();
+        // set attribute layout
+        vertex_array.set_attr_layout::<f32>(attr_layout);
 
         Self {
             vertex_array,
