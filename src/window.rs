@@ -6,7 +6,7 @@ use crate::*;
 /// wrapper around useful window-related objects and values
 pub struct Window {
     glfw: glfw::Glfw,
-    window_handle: glfw::PWindow,
+    pub window_handle: glfw::PWindow,
     events: glfw::GlfwReceiver<(f64, glfw::WindowEvent)>,
     width: u32,
     height: u32,

@@ -118,7 +118,7 @@ fn main() {
         if framerate_update_timer <= 0. {
             let duration = framerate_update_interval - framerate_update_timer;
             let fps = num_frames_in_interval as f32 / duration;
-            log::info!("avg fps: {:.2}", fps);
+            window.window_handle.set_title(format!("{} | avg fps: {:.2}", constants::WINDOW_TITLE, fps).as_str());
 
             num_frames_in_interval = 0;
             framerate_update_timer = framerate_update_interval;
