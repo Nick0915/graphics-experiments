@@ -1,3 +1,8 @@
+/// represents a 3D camera which focuses on a central object (target) and swivels
+/// around it
+///
+/// it can also raise and lower vertically, and move away and toward the
+/// target horizontally
 pub struct FocusCamera3D {
     eye: glam::Vec3,
     target: glam::Vec3,
@@ -11,6 +16,7 @@ use log::info;
 use crate::*;
 
 impl FocusCamera3D {
+    /// creates a camera
     pub fn new(
         eye: (f32, f32, f32),
         target: (f32, f32, f32),
@@ -27,10 +33,12 @@ impl FocusCamera3D {
         }
     }
 
+    /// gets the view matrix of the camera
     pub fn view(&self) -> glam::Mat4 {
         glam::Mat4::look_at_rh(self.eye, self.target, glam::Vec3::Y)
     }
 
+    /// gets the projection matrix of the camera
     pub fn projection(&self) -> glam::Mat4 {
         glam::Mat4::perspective_rh_gl(
             self.fov_y,
@@ -40,11 +48,18 @@ impl FocusCamera3D {
         )
     }
 
+    /// zooms the camera by the given amount
     pub fn zoom(&mut self, amt: f32) {
+        // not multiplied by delta time because zooming is a discrete "teleport"-
+        // like action done with the scroll wheel, not a continuous motion
         self.fov_y -= util::deg2rad(constants::ZOOM_AMT * amt);
         self.fov_y = self.fov_y.clamp(util::deg2rad(10.), util::deg2rad(90.));
     }
 
+    /// moves the camera given movement axes
+    ///
+    /// the y and z inputs move the camera as expected in its local y and z axes,
+    /// but the x input revolves the camera around the target
     pub fn r#move(&mut self, (x_axis, y_axis, z_axis): (f32, f32, f32), delta: f32) {
         // first: change distance away from focus
         let (direction, mut cur_dist) = (self.eye - self.target).normalize_and_length();
@@ -64,12 +79,15 @@ impl FocusCamera3D {
 
         let translation = z_axis * constants::MOVE_SPEED * delta;
         self.eye += glam::Vec3::Y * translation;
+
+        // make sure we don't move too far up or down
         self.eye.y = self.eye.y.clamp(MIN_HEIGHT, MAX_HEIGHT);
 
         // third: change angle around focus
         let rotation =
             glam::Quat::from_axis_angle(glam::Vec3::Y, x_axis * constants::REVOLVE_SPEED * delta);
 
+        // rotate self about the target (the rotation axis is the Y axis)
         let new_offset = rotation * (self.eye - self.target);
         let new_eye = self.target + new_offset;
         self.eye = new_eye;

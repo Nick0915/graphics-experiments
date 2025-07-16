@@ -16,49 +16,32 @@ mod util;
 mod window;
 
 fn main() {
+    // initialize logging
     dotenv::dotenv().ok();
     env_logger::init();
 
     let mut window = window::Window::new();
     let mut input_state = input::InputState::new();
     let mut camera = camera::FocusCamera3D::new(
-        (0., 0., 5.),
-        (0., 0., 0.),
-        util::deg2rad(40.),
+        (0., 0., 5.),   // camera pos
+        (0., 0., 0.),   // lookAt pos
+        util::deg2rad(40.), // vertical fov
         (
             constants::WINDOW_SIZE.0 as f32,
             constants::WINDOW_SIZE.1 as f32,
-        ),
-        (0.1, 100.),
+        ),  // aspect, used to calculate aspect ratio
+        (0.1, 100.), // near and far clip
     );
 
-    #[rustfmt::skip]
-    let vertices: Vec<f32> = vec![
-        //  x,    y,    z
-         -1.0, -1.0,  0.0, // 0: bottom-left
-          1.0, -1.0,  0.0, // 1: bottom-right
-         -1.0,  1.0,  0.0, // 2: top-left
-          1.0,  1.0,  0.0, // 3: top-right
-    ];
-
-    // pos, color
-    let attr_layout = vec![3];
-
-    #[rustfmt::skip]
-    let indices: Vec<u32> = vec![
-        1, 2, 0,    // top-left tri
-        1, 3, 2     // bottom-right tri
-    ];
-
+    // compile and link shaders used
     let vertex_source = include_str!("../shader/main.vert");
     let fragment_source = include_str!("../shader/main.frag");
-
     let shader_program = graphics::ShaderProgram::new(vertex_source, fragment_source);
-    shader_program.r#use();
 
-    // let mesh = Mesh::from_list(vertices, attr_layout, indices, shader_program);
+    // create mesh
     let mesh = Mesh::from_basic_obj(include_str!("../models/suzanne.obj"), shader_program);
 
+    // set clear (background) color and enable depth testing
     unsafe {
         gl::ClearColor(
             constants::CLEAR_COLOR.0,
@@ -69,6 +52,7 @@ fn main() {
         gl::Enable(gl::DEPTH_TEST);
     }
 
+    // timing stuff
     let mut start_time = 0.;
     unsafe {
         start_time = glfwGetTime();
@@ -76,9 +60,20 @@ fn main() {
     let mut last_frame_time = start_time;
     let mut delta = 0.;
 
+    // fps stuff
+    let framerate_update_interval = 0.25;
+    let mut framerate_update_timer = framerate_update_interval;
+    let mut num_frames_in_interval = 0;
+
+    // main loop
     while !window.should_close() {
-        input_state.update();
+        // reset input state
+        input_state.reset();
+
+        // collect inputs
         window.process_input(&mut input_state);
+
+        // use inputs to update camera
         camera.zoom(input_state.vertical_scroll);
         camera.r#move(
             (
@@ -89,30 +84,44 @@ fn main() {
             delta,
         );
 
+        // get model-view-projection matrix from camera, upload it as uniform
         let mut mvp = camera.projection() * camera.view();
         shader_program.uniform_matrix4f("u_MVP", &mvp.to_cols_array()[0]);
 
         unsafe {
+            // clear last frame
             gl::Clear(gl::COLOR_BUFFER_BIT | gl::DEPTH_BUFFER_BIT);
 
-            // vertex_array.bind();
-            // vertex_buffer.bind();
-            // index_buffer.bind();
-            // gl::DrawElements(gl::TRIANGLES, 6, gl::UNSIGNED_INT, std::ptr::null());
+            // draw mesh
             mesh.draw();
 
+            // check for errors
             if gl::GetError() != gl::NO_ERROR {
                 panic!("There was a GL error!");
             }
         }
 
-        window.draw();
+        // present the newly drawn frame
+        window.present_frame();
 
+        // update timing stuff
         let mut current_time = 0.;
         unsafe {
             current_time = glfwGetTime();
         }
         delta = (current_time - last_frame_time) as f32;
         last_frame_time = current_time;
+
+        // update fps stuff
+        num_frames_in_interval += 1;
+        framerate_update_timer -= delta;
+        if framerate_update_timer <= 0. {
+            let duration = framerate_update_interval - framerate_update_timer;
+            let fps = num_frames_in_interval as f32 / duration;
+            log::info!("avg fps: {:.2}", fps);
+
+            num_frames_in_interval = 0;
+            framerate_update_timer = framerate_update_interval;
+        }
     }
 }

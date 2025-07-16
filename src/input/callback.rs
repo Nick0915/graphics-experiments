@@ -2,6 +2,7 @@ use glfw::{self, PWindow};
 
 use crate::input::*;
 
+/// handles mouse button events and updates input state accordingly
 pub fn mouse_button_callback(
     window_handle: &mut PWindow,
     mouse_button: glfw::MouseButton,
@@ -27,6 +28,7 @@ pub fn mouse_button_callback(
     }
 }
 
+/// handles cursor position events and updates input state accordingly
 pub fn cursor_pos_callback(
     window_handle: &mut PWindow,
     x: f64,
@@ -48,10 +50,12 @@ pub fn cursor_pos_callback(
     }
 }
 
+/// handles scrolling events and updates input state accordingly
 pub fn scroll_callback(window_handle: &mut PWindow, x: f64, y: f64, input_state: &mut InputState) {
     input_state.vertical_scroll = y as f32;
 }
 
+/// handles key events and updates input state accordingly
 pub fn key_callback(
     window_handle: &mut PWindow,
     key: glfw::Key,
