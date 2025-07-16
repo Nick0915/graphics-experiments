@@ -58,9 +58,9 @@ impl FocusCamera3D {
         let new_eye = self.target + new_offset;
         self.eye = new_eye;
 
-        // second: change height off ground
-        const MAX_HEIGHT: f32 = 25.;
-        const MIN_HEIGHT: f32 = 0.;
+        // second: change height from ground
+        const MAX_HEIGHT: f32 = 12.5;
+        const MIN_HEIGHT: f32 = -12.5;
 
         let translation = z_axis * constants::MOVE_SPEED * delta;
         self.eye += glam::Vec3::Y * translation;

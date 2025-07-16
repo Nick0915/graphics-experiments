@@ -22,7 +22,8 @@ impl Mesh {
         let mut vertex_array = graphics::VAO::new::<f32>(attr_layout, gl::FLOAT);
         vertex_array.bind();
 
-        log::info!("Mesh has {} vertices and {} faces", (vertices.len() / 3) as i32, (indices.len() / 3) as i32);
+        // log::info!("Mesh has {} vertices and {} faces", (vertices.len() / 3) as i32, (indices.len() / 3) as i32);
+        log::info!("vertices: {:?}, indices: {:?}", vertices, indices);
 
         Self {
             vertex_array,

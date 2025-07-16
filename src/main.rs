@@ -34,20 +34,20 @@ fn main() {
 
     #[rustfmt::skip]
     let vertices: Vec<f32> = vec![
-        //  x,    y,    z,    r,   g,   b
-         -1.0,  1.0,  1.0,  1.0, 0.0, 0.0, // 0: top-left
-         -1.0, -1.0, -1.0,  0.0, 1.0, 0.0, // 1: bottom-left
-          1.0, -1.0,  1.0,  0.0, 0.0, 1.0, // 2: bottom-right
-          1.0,  1.0, -1.0,  1.0, 0.0, 1.0, // 3: top-right
+        //  x,    y,    z
+         -1.0, -1.0,  0.0, // 0: bottom-left
+          1.0, -1.0,  0.0, // 1: bottom-right
+         -1.0,  1.0,  0.0, // 2: top-left
+          1.0,  1.0,  0.0, // 3: top-right
     ];
 
     // pos, color
-    let attr_layout = vec![3, 3];
+    let attr_layout = vec![3];
 
     #[rustfmt::skip]
     let indices: Vec<u32> = vec![
-        0, 1, 3,    // top-left tri
-        3, 2, 1     // bottom-right tri
+        1, 2, 0,    // top-left tri
+        1, 3, 2     // bottom-right tri
     ];
 
     let vertex_source = include_str!("../shader/main.vert");
@@ -56,7 +56,8 @@ fn main() {
     let shader_program = graphics::ShaderProgram::new(vertex_source, fragment_source);
     shader_program.r#use();
 
-    let mesh = Mesh::from_list(vertices, attr_layout, indices, shader_program);
+    // let mesh = Mesh::from_list(vertices, attr_layout, indices, shader_program);
+    let mesh = Mesh::from_basic_obj(include_str!("../models/suzanne.obj"), shader_program);
 
     unsafe {
         gl::ClearColor(
