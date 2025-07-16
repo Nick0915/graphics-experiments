@@ -32,10 +32,10 @@ fn main() {
    #[rustfmt::skip]
     let vertices: Vec<f32> = vec![
         //  x,    y,    z,    r,   g,   b
-         -1.0,  1.0,  0.0,  1.0, 0.0, 0.0, // 0: top-left
-         -1.0, -1.0,  0.0,  0.0, 1.0, 0.0, // 1: bottom-left
-          1.0, -1.0,  0.0,  0.0, 0.0, 1.0, // 2: bottom-right
-          1.0,  1.0,  0.0,  1.0, 0.0, 1.0, // 3: top-right
+         -1.0,  1.0,  1.0,  1.0, 0.0, 0.0, // 0: top-left
+         -1.0, -1.0, -1.0,  0.0, 1.0, 0.0, // 1: bottom-left
+          1.0, -1.0,  1.0,  0.0, 0.0, 1.0, // 2: bottom-right
+          1.0,  1.0, -1.0,  1.0, 0.0, 1.0, // 3: top-right
     ];
 
     // pos, color
@@ -71,6 +71,7 @@ fn main() {
             constants::CLEAR_COLOR.2,
             constants::CLEAR_COLOR.3,
         );
+        gl::Enable(gl::DEPTH_TEST);
     }
 
     let mut start_time = 0.;
@@ -95,7 +96,7 @@ fn main() {
 
         unsafe {
             // gl::PolygonMode(gl::FRONT_AND_BACK, gl::LINE);
-            gl::Clear(gl::COLOR_BUFFER_BIT);
+            gl::Clear(gl::COLOR_BUFFER_BIT | gl::DEPTH_BUFFER_BIT);
 
             vertex_array.bind();
             vertex_buffer.bind();
