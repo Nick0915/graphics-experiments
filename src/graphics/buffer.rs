@@ -12,7 +12,7 @@ impl BufferObject {
     /// creates a new (empty) buffer
     /// if type is ARRAY_BUFFER, this is a VBO
     /// if type is ELEMENT_ARRAY_BUFFER, this is an EBO/IBO
-    pub fn new(r#type: GLenum, usage: GLenum) -> Self {
+    pub fn new(target: GLenum, usage: GLenum) -> Self {
         let mut id = 0;
         unsafe {
             gl::GenBuffers(1, &mut id);
@@ -20,7 +20,7 @@ impl BufferObject {
 
         Self {
             id,
-            target: r#type,
+            target,
             usage,
         }
     }
@@ -42,10 +42,13 @@ impl BufferObject {
     /// populates the buffer in the GPU with data
     pub fn buffer_data<T>(&mut self, data: &Vec<T>) {
         self.bind();
+        let data_type_size = mem::size_of::<T>();
+        let num_elements = data.len();
+
         unsafe {
             gl::BufferData(
                 self.target,                // the buffer we're sending data to
-                (data.len() * mem::size_of::<T>()) as GLsizeiptr,  // the number of bytes we're trying to allocate
+                (num_elements * data_type_size) as GLsizeiptr,  // the number of bytes we're trying to allocate
                 mem::transmute(&data[0]),   // pointer to the buffer (first element)
                 self.usage,                 // how the buffer will be used (static, copy, etc.)
             );

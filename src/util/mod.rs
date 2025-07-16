@@ -1,7 +1,7 @@
-pub mod error;
+pub mod logging;
 pub mod math;
 pub mod hardcode;
 
-pub use error::*;
+pub use logging::*;
 pub use math::*;
 pub use hardcode::*;

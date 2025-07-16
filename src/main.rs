@@ -4,9 +4,9 @@ use dotenv;
 use gl::{self, types::*};
 use glfw::ffi::glfwGetTime;
 use log;
-use std::{self, thread::current};
+use std::{self, thread::current, io::Write};
 
-use crate::graphics::{shader, Mesh};
+use crate::{graphics::{shader, BufferObject, Mesh, VAO}, model::Model};
 
 mod camera;
 mod constants;
@@ -14,11 +14,28 @@ mod graphics;
 mod input;
 mod util;
 mod window;
+mod model;
+mod grid;
 
 fn main() {
     // initialize logging
     dotenv::dotenv().ok();
-    env_logger::init();
+    env_logger::Builder::from_default_env()
+        .format(|buf, record| {
+            writeln!(
+                buf,
+                // [file:line (time) level]> message
+                "[{}:{} ({}) {}]> {}",
+                record.file().unwrap_or("unknown"),
+                record.line().unwrap_or(0),
+                chrono::Local::now().format("%H:%M:%S"),
+                record.level(),
+                record.args()
+            )
+        }).filter(Some("logger_example"), log::LevelFilter::Debug)
+        .init();
+
+    log::info!("hi");
 
     let mut window = window::Window::new();
     let mut input_state = input::InputState::new();
@@ -40,6 +57,7 @@ fn main() {
 
     // create mesh
     let mesh = Mesh::from_basic_obj(include_str!("../models/suzanne.obj"), shader_program);
+    let mut suzanne = Model::from_default_transform(mesh);
 
     // set clear (background) color and enable depth testing
     unsafe {
@@ -84,21 +102,20 @@ fn main() {
             delta,
         );
 
+        // update model rotation
+        // suzanne.rotate(glam::Vec3::Y, util::deg2rad(15.) * delta);
+
         // get model-view-projection matrix from camera, upload it as uniform
-        let mut mvp = camera.projection() * camera.view();
+        // let mut mvp = camera.projection() * camera.view();
+        let mut mvp = camera.projection() * camera.view() * suzanne.model();
         shader_program.uniform_matrix4f("u_MVP", &mvp.to_cols_array()[0]);
 
         unsafe {
             // clear last frame
             gl::Clear(gl::COLOR_BUFFER_BIT | gl::DEPTH_BUFFER_BIT);
 
-            // draw mesh
-            mesh.draw();
-
-            // check for errors
-            if gl::GetError() != gl::NO_ERROR {
-                panic!("There was a GL error!");
-            }
+            // draw model
+            suzanne.draw();
         }
 
         // present the newly drawn frame

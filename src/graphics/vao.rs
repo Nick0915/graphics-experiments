@@ -4,12 +4,31 @@ use std::{mem, os::raw::c_void};
 /// wrapper around a vertex array object for OpenGL
 pub struct VAO {
     id: u32,
-    attr_layout: Vec<u32>,
-    r#type: GLenum,
+    attr_layout: Option<Vec<u32>>,
+    data_type: GLenum,
 }
 
 impl VAO {
-    /// create a new VAO given an attribute layout and the datatype of the vertex buffer.
+    /// creates a new (empty) VAO in gpu memory
+    pub fn new(data_type: GLenum) -> Self {
+        let mut id = 0;
+
+        unsafe {
+            // generate and bind a vertex array
+            gl::GenVertexArrays(1, &mut id);
+            if id == 0 {
+                log::error!("couldn't generate a new vao!");
+            }
+        }
+
+        Self {
+            id,
+            attr_layout: None,
+            data_type
+        }
+    }
+
+    /// sets attribute layout and the datatype of the vertex buffer.
     ///
     /// attr_layout will be a vec of u32s, each of which determine how many elements
     /// each attribute consists.
@@ -18,13 +37,18 @@ impl VAO {
     /// will be a vec2 (2 floats) and the second attribute will be a vec3 (3 floats)
     ///
     /// VertexDataType represents the type of each element (usually f32 for floats)
-    pub fn new<VertexDataType>(attr_layout: Vec<u32>, r#type: GLenum) -> Self {
-        let mut id = 0;
+    pub fn set_attr_layout<VertexDataType>(&mut self, attr_layout: Vec<u32>) {
+        unsafe{
+            let mut bound_vbo = 0;
+            if {
+                gl::GetIntegerv(gl::ARRAY_BUFFER_BINDING, &mut bound_vbo);
+                bound_vbo
+            } == 0 {
+                log::error!("Attempting to set VAO layout without a bound vertex buffer");
+                panic!();
+            }
 
-        unsafe {
-            // generate and bind a vertex array
-            gl::GenVertexArrays(1, &mut id);
-            gl::BindVertexArray(id);
+            gl::BindVertexArray(self.id);
 
             let num_attrs = attr_layout.len();
 
@@ -46,13 +70,13 @@ impl VAO {
                 gl::VertexAttribPointer(
                     index as u32,                                   // the N in layout (location = N)
                     size as i32,                                    // size (in quantity) of the data (vec3 -> 3 floats, so size = 3)
-                    r#type,                                         // type of the data (vec3 uses floats, so gl::FLOAT)
+                    self.data_type,                                      // type of the data (vec3 uses floats, so gl::FLOAT)
                     gl::FALSE,                                      // normalized?
                     stride as i32,                                  // # of bytes between each new vertex (not to next attribute in the same vertex)
                     (offset * mem::size_of::<VertexDataType>()) as *const _      // offset (in bytes) to the first instance of this attr in the array (casted to a pointer)
                 );
                 // need to enable this attribute to make it work
-                gl::EnableVertexArrayAttrib(id, index as u32);
+                gl::EnableVertexArrayAttrib(self.id, index as u32);
 
                 // update the next attribute's offset by moving forward by the
                 // number of elements we just defined for the current attribute
@@ -60,11 +84,7 @@ impl VAO {
             }
         }
 
-        Self {
-            id,
-            attr_layout,
-            r#type,
-        }
+        self.attr_layout = Some(attr_layout);
     }
 
     /// binds the VAO

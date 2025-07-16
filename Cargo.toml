@@ -10,4 +10,8 @@ bytemuck = "*"
 glam = "*"
 log = "*"
 env_logger = "*"
+chrono = "*"
 dotenv = "*"
+
+[profile.release]
+opt-level = 3
