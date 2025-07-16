@@ -9,29 +9,31 @@ pub struct Mesh {
 }
 
 impl Mesh {
-    pub fn from_list(vertices: Vec<f32>, indices: Vec<u32>, shader_program: graphics::ShaderProgram) -> Self {
-        let mut vertex_buffer = graphics::BufferObject::new(gl::ARRAY_BUFFER, gl::STATIC_DRAW);
-        vertex_buffer.buffer_data(&vertices);
-
+    pub fn from_list(vertices: Vec<f32>, attr_layout: Vec<u32>, indices: Vec<u32>, shader_program: graphics::ShaderProgram) -> Self {
         let mut index_buffer = graphics::BufferObject::new(gl::ELEMENT_ARRAY_BUFFER, gl::STATIC_DRAW);
+        index_buffer.bind();
         index_buffer.buffer_data(&indices);
 
-        let attr_layout = vec![3];
+        let mut vertex_buffer = graphics::BufferObject::new(gl::ARRAY_BUFFER, gl::STATIC_DRAW);
+        vertex_buffer.bind();
+        vertex_buffer.buffer_data(&vertices);
+
+        // let attr_layout = vec![3];
         let mut vertex_array = graphics::VAO::new::<f32>(attr_layout, gl::FLOAT);
+        vertex_array.bind();
 
         log::info!("Mesh has {} vertices and {} faces", (vertices.len() / 3) as i32, (indices.len() / 3) as i32);
-        log::info!("indices: {:?}", indices);
 
         Self {
             vertex_array,
             vertex_buffer,
             index_buffer,
-            num_indices: (indices.len() / 3) as usize,
+            num_indices: indices.len(),
             shader_program,
         }
     }
 
-    pub fn from_obj(obj: &str, shader_program: graphics::ShaderProgram) -> Self {
+    pub fn from_basic_obj(obj: &str, shader_program: graphics::ShaderProgram) -> Self {
         let mut vertices: Vec<f32> = Vec::new();
         let mut indices: Vec<u32> = Vec::new();
 
@@ -66,7 +68,7 @@ impl Mesh {
             }
         }
 
-        Self::from_list(vertices, indices, shader_program)
+        Self::from_list(vertices, vec![3], indices, shader_program)
     }
 
     pub fn draw(&self) {

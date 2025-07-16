@@ -6,7 +6,7 @@ use glfw::ffi::glfwGetTime;
 use log;
 use std::{self, thread::current};
 
-use crate::graphics::shader;
+use crate::graphics::{shader, Mesh};
 
 mod camera;
 mod constants;
@@ -56,16 +56,7 @@ fn main() {
     let shader_program = graphics::ShaderProgram::new(vertex_source, fragment_source);
     shader_program.r#use();
 
-    let mut index_buffer = graphics::BufferObject::new(gl::ELEMENT_ARRAY_BUFFER, gl::STATIC_DRAW);
-    index_buffer.bind();
-    index_buffer.buffer_data(&indices);
-
-    let mut vertex_buffer = graphics::BufferObject::new(gl::ARRAY_BUFFER, gl::STATIC_DRAW);
-    vertex_buffer.bind();
-    vertex_buffer.buffer_data(&vertices);
-
-    let mut vertex_array = graphics::VAO::new::<f32>(attr_layout, gl::FLOAT);
-    vertex_array.bind();
+    let mesh = Mesh::from_list(vertices, attr_layout, indices, shader_program);
 
     unsafe {
         gl::ClearColor(
@@ -87,7 +78,6 @@ fn main() {
     while !window.should_close() {
         input_state.update();
         window.process_input(&mut input_state);
-        // camera.pan(input_state.drag_amount);
         camera.zoom(input_state.vertical_scroll);
         camera.r#move(
             (
@@ -99,19 +89,16 @@ fn main() {
         );
 
         let mut mvp = camera.projection() * camera.view();
-        // util::pretty_print_mat4("view", &camera.view());
-        // util::pretty_print_mat4("projection", &camera.projection());
-        // util::pretty_print_mat4("mvp", &mvp);
         shader_program.uniform_matrix4f("u_MVP", &mvp.to_cols_array()[0]);
 
         unsafe {
-            // gl::PolygonMode(gl::FRONT_AND_BACK, gl::LINE);
             gl::Clear(gl::COLOR_BUFFER_BIT | gl::DEPTH_BUFFER_BIT);
 
-            vertex_array.bind();
-            vertex_buffer.bind();
-            index_buffer.bind();
-            gl::DrawElements(gl::TRIANGLES, 6, gl::UNSIGNED_INT, std::ptr::null());
+            // vertex_array.bind();
+            // vertex_buffer.bind();
+            // index_buffer.bind();
+            // gl::DrawElements(gl::TRIANGLES, 6, gl::UNSIGNED_INT, std::ptr::null());
+            mesh.draw();
 
             if gl::GetError() != gl::NO_ERROR {
                 panic!("There was a GL error!");
