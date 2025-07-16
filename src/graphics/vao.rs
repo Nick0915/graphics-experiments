@@ -8,7 +8,7 @@ pub struct VAO {
 }
 
 impl VAO {
-    pub fn new<T>(attr_layout: Vec<u32>, r#type: GLenum, data: &Vec<T>) -> Self {
+    pub fn new<VertexDataType>(attr_layout: Vec<u32>, r#type: GLenum) -> Self {
         let mut id = 0;
 
         unsafe {
@@ -17,7 +17,7 @@ impl VAO {
 
             let num_attrs = attr_layout.len();
 
-            let stride = attr_layout.iter().sum::<u32>() * std::mem::size_of::<T>() as u32;
+            let stride = attr_layout.iter().sum::<u32>() * std::mem::size_of::<VertexDataType>() as u32;
 
             let mut offset = 0;
             for index in 0..attr_layout.len() {
@@ -30,7 +30,7 @@ impl VAO {
                     r#type,                                         // type of the data (vec3 uses floats, so gl::FLOAT)
                     gl::FALSE,                                      // normalized?
                     stride as i32,                                  // # of bytes between each new vertex (not to next attribute in the same vertex)
-                    (offset * mem::size_of::<T>()) as *const _      // offset (in bytes) to the first instance of this attr in the array (casted to a pointer)
+                    (offset * mem::size_of::<VertexDataType>()) as *const _      // offset (in bytes) to the first instance of this attr in the array (casted to a pointer)
                 );
                 gl::EnableVertexArrayAttrib(id, index as u32);
 

@@ -17,7 +17,7 @@ impl Mesh {
         index_buffer.buffer_data(&indices);
 
         let attr_layout = vec![3];
-        let mut vertex_array = graphics::VAO::new(attr_layout, gl::FLOAT, &vertices);
+        let mut vertex_array = graphics::VAO::new::<f32>(attr_layout, gl::FLOAT);
 
         log::info!("Mesh has {} vertices and {} faces", (vertices.len() / 3) as i32, (indices.len() / 3) as i32);
         log::info!("indices: {:?}", indices);

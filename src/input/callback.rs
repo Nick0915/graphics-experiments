@@ -60,11 +60,34 @@ pub fn key_callback(
     modifiers: glfw::Modifiers,
     input_state: &mut InputState,
 ) {
-    match key {
-        glfw::Key::Escape => {
-            // window.close()
+    match (key, action) {
+        (glfw::Key::Escape, glfw::Action::Release) => {
             window_handle.set_should_close(true);
-        }
+        },
+        (glfw::Key::W | glfw::Key::Up, glfw::Action::Press) => {
+            input_state.wasd_vec.1 += 1.;
+        },
+        (glfw::Key::A | glfw::Key::Left, glfw::Action::Press) => {
+            input_state.wasd_vec.0 -= 1.;
+        },
+        (glfw::Key::S | glfw::Key::Down, glfw::Action::Press) => {
+            input_state.wasd_vec.1 -= 1.;
+        },
+        (glfw::Key::D | glfw::Key::Right, glfw::Action::Press) => {
+            input_state.wasd_vec.0 += 1.;
+        },
+        (glfw::Key::W | glfw::Key::Up, glfw::Action::Release) => {
+            input_state.wasd_vec.1 -= 1.;
+        },
+        (glfw::Key::A | glfw::Key::Left, glfw::Action::Release) => {
+            input_state.wasd_vec.0 += 1.;
+        },
+        (glfw::Key::S | glfw::Key::Down, glfw::Action::Release) => {
+            input_state.wasd_vec.1 += 1.;
+        },
+        (glfw::Key::D | glfw::Key::Right, glfw::Action::Release) => {
+            input_state.wasd_vec.0 -= 1.;
+        },
         _ => {}
     }
 }

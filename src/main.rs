@@ -2,8 +2,9 @@
 
 use dotenv;
 use gl::{self, types::*};
+use glfw::ffi::glfwGetTime;
 use log;
-use std;
+use std::{self, thread::current};
 
 use crate::graphics::shader;
 
@@ -20,21 +21,25 @@ fn main() {
 
     let mut window = window::Window::new();
     let mut input_state = input::InputState::new();
-    // let mut camera = camera::Camera3D::new(
-    //     (0., 2., -5.),
-    //     (0., 0., 0.),
-    //     0.785398,
-    //     (constants::WINDOW_SIZE.0 as f32, constants::WINDOW_SIZE.1 as f32),
-    //     (0.1, 1000.)
-    // );
+    let mut camera = camera::FocusCamera3D::new(
+        (0., 0., 5.),
+        (0., 0., 0.),
+        util::deg2rad(40.),
+        (constants::WINDOW_SIZE.0 as f32, constants::WINDOW_SIZE.1 as f32),
+        (0.1, 100.)
+    );
 
    #[rustfmt::skip]
     let vertices: Vec<f32> = vec![
-         -0.5,  0.5, // 0: top-left pos
-         -0.5, -0.5, // 1: bottom-left pos
-          0.5, -0.5, // 2: bottom-right pos
-          0.5,  0.5, // 3: top-right por
+        //  x,    y,    z,    r,   g,   b
+         -1.0,  1.0,  0.0,  1.0, 0.0, 0.0, // 0: top-left
+         -1.0, -1.0,  0.0,  0.0, 1.0, 0.0, // 1: bottom-left
+          1.0, -1.0,  0.0,  0.0, 0.0, 1.0, // 2: bottom-right
+          1.0,  1.0,  0.0,  1.0, 0.0, 1.0, // 3: top-right
     ];
+
+    // pos, color
+    let attr_layout = vec![3, 3];
 
     #[rustfmt::skip]
     let indices: Vec<u32> = vec![
@@ -56,15 +61,8 @@ fn main() {
     vertex_buffer.bind();
     vertex_buffer.buffer_data(&vertices);
 
-    let attr_layout = vec![2];
-    let mut vertex_array = graphics::VAO::new(attr_layout, gl::FLOAT, &vertices);
+    let mut vertex_array = graphics::VAO::new::<f32>(attr_layout, gl::FLOAT);
     vertex_array.bind();
-
-    unsafe {
-        if gl::GetError() != gl::NO_ERROR {
-            panic!("There was a GL error!");
-        }
-    }
 
     unsafe {
         gl::ClearColor(
@@ -75,19 +73,24 @@ fn main() {
         );
     }
 
-    let mut u_loc_resolution = 0;
-    let mut u_loc_zoom = 0;
-    let mut u_loc_pan = 0;
+    let mut start_time = 0.;
+    unsafe {
+        start_time = glfwGetTime();
+    }
+    let mut last_frame_time = start_time;
+    let mut delta = 0.;
 
     while !window.should_close() {
         input_state.update();
         window.process_input(&mut input_state);
         // camera.pan(input_state.drag_amount);
-        // camera.zoom(input_state.vertical_scroll);
+        camera.zoom(input_state.vertical_scroll);
+        camera.r#move(input_state.wasd_vec, delta);
 
-        // let mvp = camera.view().mul_mat4(&camera.projection());
-        // println!("{}", mvp);
-        let mvp = glam::Mat4::IDENTITY;
+        let mut mvp = camera.projection() * camera.view();
+        // util::pretty_print_mat4("view", &camera.view());
+        // util::pretty_print_mat4("projection", &camera.projection());
+        // util::pretty_print_mat4("mvp", &mvp);
         shader_program.uniform_matrix4f("u_MVP", &mvp.to_cols_array()[0]);
 
         unsafe {
@@ -103,8 +106,19 @@ fn main() {
                 gl::UNSIGNED_INT,
                 std::ptr::null(),
             );
+
+            if gl::GetError() != gl::NO_ERROR {
+                panic!("There was a GL error!");
+            }
         }
 
         window.draw();
+
+        let mut current_time = 0.;
+        unsafe {
+            current_time = glfwGetTime();
+        }
+        delta = (current_time - last_frame_time) as f32;
+        last_frame_time = current_time;
     }
 }

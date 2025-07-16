@@ -4,4 +4,5 @@ pub const WINDOW_TITLE: &str = "Hello world!";
 // pub const CLEAR_COLOR: (f32, f32, f32, f32) = (0.15, 0.15, 0.22, 0.0);
 pub const CLEAR_COLOR: (f32, f32, f32, f32) = (0., 0., 0., 0.);
 
-pub const ZOOM_AMT: f32 = 0.9;
+pub const ZOOM_AMT: f32 = 5.;
+pub const MOVE_SPEED: f32 = 15.;
