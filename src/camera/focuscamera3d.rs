@@ -6,6 +6,8 @@ pub struct FocusCamera3D {
     z_clip: (f32, f32),
 }
 
+use log::info;
+
 use crate::*;
 
 impl FocusCamera3D {
@@ -43,12 +45,12 @@ impl FocusCamera3D {
         self.fov_y = self.fov_y.clamp(util::deg2rad(10.), util::deg2rad(90.));
     }
 
-    pub fn r#move(&mut self, (horiz, vert): (f32, f32), delta: f32) {
+    pub fn r#move(&mut self, (x_axis, y_axis, z_axis): (f32, f32, f32), delta: f32) {
         // first: change distance away from focus
         let (direction, mut cur_dist) = (self.eye - self.target).normalize_and_length();
 
         // make sure we don't move too far from the focus
-        let mut new_dist = cur_dist - vert * constants::MOVE_SPEED * delta;
+        let mut new_dist = cur_dist - y_axis * constants::MOVE_SPEED * delta;
         new_dist = new_dist.clamp(self.z_clip.0, self.z_clip.1);
 
         let new_offset = direction * new_dist;
@@ -56,9 +58,17 @@ impl FocusCamera3D {
         let new_eye = self.target + new_offset;
         self.eye = new_eye;
 
-        // second: change angle around focus
+        // second: change height off ground
+        const MAX_HEIGHT: f32 = 25.;
+        const MIN_HEIGHT: f32 = 0.;
+
+        let translation = z_axis * constants::MOVE_SPEED * delta;
+        self.eye += glam::Vec3::Y * translation;
+        self.eye.y = self.eye.y.clamp(MIN_HEIGHT, MAX_HEIGHT);
+
+        // third: change angle around focus
         let rotation =
-            glam::Quat::from_axis_angle(glam::Vec3::Y, horiz * constants::REVOLVE_SPEED * delta);
+            glam::Quat::from_axis_angle(glam::Vec3::Y, x_axis * constants::REVOLVE_SPEED * delta);
 
         let new_offset = rotation * (self.eye - self.target);
         let new_eye = self.target + new_offset;

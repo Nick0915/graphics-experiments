@@ -88,6 +88,18 @@ pub fn key_callback(
         (glfw::Key::D | glfw::Key::Right, glfw::Action::Release) => {
             input_state.wasd_vec.0 -= 1.;
         },
+        (glfw::Key::Space, glfw::Action::Press) => {
+            input_state.space_crouch += 1.;
+        },
+        (glfw::Key::Space, glfw::Action::Release) => {
+            input_state.space_crouch -= 1.;
+        },
+        (glfw::Key::LeftControl, glfw::Action::Press) => {
+            input_state.space_crouch -= 1.;
+        },
+        (glfw::Key::LeftControl, glfw::Action::Release) => {
+            input_state.space_crouch += 1.;
+        },
         _ => {}
     }
 }

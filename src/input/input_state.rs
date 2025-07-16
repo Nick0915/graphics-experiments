@@ -5,6 +5,7 @@ pub struct InputState {
     pub is_dragging: bool,
     pub vertical_scroll: f32,
     pub wasd_vec: (f32, f32),
+    pub space_crouch: f32,
 }
 
 impl InputState {
@@ -16,6 +17,7 @@ impl InputState {
             is_dragging: false,
             vertical_scroll: 0.,
             wasd_vec: (0., 0.),
+            space_crouch: 0.
         }
     }
 

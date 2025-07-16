@@ -25,11 +25,14 @@ fn main() {
         (0., 0., 5.),
         (0., 0., 0.),
         util::deg2rad(40.),
-        (constants::WINDOW_SIZE.0 as f32, constants::WINDOW_SIZE.1 as f32),
-        (0.1, 100.)
+        (
+            constants::WINDOW_SIZE.0 as f32,
+            constants::WINDOW_SIZE.1 as f32,
+        ),
+        (0.1, 100.),
     );
 
-   #[rustfmt::skip]
+    #[rustfmt::skip]
     let vertices: Vec<f32> = vec![
         //  x,    y,    z,    r,   g,   b
          -1.0,  1.0,  1.0,  1.0, 0.0, 0.0, // 0: top-left
@@ -86,7 +89,14 @@ fn main() {
         window.process_input(&mut input_state);
         // camera.pan(input_state.drag_amount);
         camera.zoom(input_state.vertical_scroll);
-        camera.r#move(input_state.wasd_vec, delta);
+        camera.r#move(
+            (
+                input_state.wasd_vec.0,
+                input_state.wasd_vec.1,
+                input_state.space_crouch,
+            ),
+            delta,
+        );
 
         let mut mvp = camera.projection() * camera.view();
         // util::pretty_print_mat4("view", &camera.view());
@@ -101,12 +111,7 @@ fn main() {
             vertex_array.bind();
             vertex_buffer.bind();
             index_buffer.bind();
-            gl::DrawElements(
-                gl::TRIANGLES,
-                6,
-                gl::UNSIGNED_INT,
-                std::ptr::null(),
-            );
+            gl::DrawElements(gl::TRIANGLES, 6, gl::UNSIGNED_INT, std::ptr::null());
 
             if gl::GetError() != gl::NO_ERROR {
                 panic!("There was a GL error!");
