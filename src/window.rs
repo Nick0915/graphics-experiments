@@ -1,7 +1,7 @@
 use gl;
 use glfw::{self, Context, WindowEvent};
 
-use crate::*;
+use crate::{util::logging, *};
 
 /// wrapper around useful window-related objects and values
 pub struct Window {
@@ -17,7 +17,7 @@ impl Window {
     /// create a new window
     pub fn new() -> Window {
         // initialize GLFW
-        let mut glfw = glfw::init(util::error::error_callback).expect("Couldn't initialize GLFW!");
+        let mut glfw = glfw::init(util::logging::error_callback).expect("Couldn't initialize GLFW!");
 
         // hint about OpenGL version
         glfw.window_hint(glfw::WindowHint::ContextVersion(4, 6));
@@ -44,6 +44,9 @@ impl Window {
         // load OpenGL functions using this window's process address
         gl::load_with(|s| glfw.get_proc_address_raw(s));
         unsafe {
+            gl::Enable(gl::DEBUG_OUTPUT);
+            gl::DebugMessageCallback(Some(logging::gl_error_callback), std::ptr::null());
+
             // where to set the bottom-left of the viewport and how big it should be
             // set it at corner of the window and make it the size of the window
             gl::Viewport(
@@ -53,6 +56,7 @@ impl Window {
                 constants::WINDOW_SIZE.1 as i32,
             );
         }
+
 
         // buffering (change to SwapInterval::Sync(1) for double-buffered VSync)
         glfw.set_swap_interval(glfw::SwapInterval::None);
