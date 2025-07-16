@@ -6,3 +6,4 @@ pub const CLEAR_COLOR: (f32, f32, f32, f32) = (0., 0., 0., 0.);
 
 pub const ZOOM_AMT: f32 = 5.;
 pub const MOVE_SPEED: f32 = 15.;
+pub const REVOLVE_SPEED: f32 = 5.;

@@ -21,12 +21,12 @@ impl FocusCamera3D {
             target: glam::Vec3::new(target.0, target.1, target.2),
             fov_y,
             aspect,
-            z_clip
+            z_clip,
         }
     }
 
     pub fn view(&self) -> glam::Mat4 {
-        glam::Mat4::look_at_rh(self.eye, self.target, glam::Vec3::new(0., 1., 0.))
+        glam::Mat4::look_at_rh(self.eye, self.target, glam::Vec3::Y)
     }
 
     pub fn projection(&self) -> glam::Mat4 {
@@ -57,5 +57,11 @@ impl FocusCamera3D {
         self.eye = new_eye;
 
         // second: change angle around focus
+        let rotation =
+            glam::Quat::from_axis_angle(glam::Vec3::Y, horiz * constants::REVOLVE_SPEED * delta);
+
+        let new_offset = rotation * (self.eye - self.target);
+        let new_eye = self.target + new_offset;
+        self.eye = new_eye;
     }
 }
