@@ -37,6 +37,8 @@ impl VAO {
     /// will be a vec2 (2 floats) and the second attribute will be a vec3 (3 floats)
     ///
     /// VertexDataType represents the type of each element (usually f32 for floats)
+    ///
+    /// note: there needs to be an active vertex buffer before we can set the layout of the VAO
     pub fn set_attr_layout<VertexDataType>(&mut self, attr_layout: Vec<u32>) {
         unsafe{
             let mut bound_vbo = 0;
@@ -88,6 +90,8 @@ impl VAO {
     }
 
     /// binds the VAO
+    ///
+    /// note: the VAO needs to be bound before the index and vertex buffers are bound and populated
     pub fn bind(&self) {
         unsafe {
             gl::BindVertexArray(self.id);

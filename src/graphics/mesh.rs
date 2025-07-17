@@ -13,21 +13,23 @@ pub struct Mesh {
 impl Mesh {
     /// builds a mesh from a list of vertices, indices, an attribute layout scheme, and a shader program
     pub fn from_list(vertices: Vec<f32>, attr_layout: Vec<u32>, indices: Vec<u32>, shader_program: graphics::ShaderProgram) -> Self {
-        // create VAO
+        // 1. create VAO, VBO, IBO
         let mut vertex_array = graphics::VAO::new(gl::FLOAT);
+        let mut vertex_buffer = graphics::BufferObject::new(gl::ARRAY_BUFFER, gl::STATIC_DRAW);
+        let mut index_buffer = graphics::BufferObject::new(gl::ELEMENT_ARRAY_BUFFER, gl::STATIC_DRAW);
+
+        // 2. bind VAO
         vertex_array.bind();
 
-        // create IBO
-        let mut index_buffer = graphics::BufferObject::new(gl::ELEMENT_ARRAY_BUFFER, gl::STATIC_DRAW);
+        // 3. bind IBO and populate
         index_buffer.bind();
         index_buffer.buffer_data(&indices);
 
-        // create VBO
-        let mut vertex_buffer = graphics::BufferObject::new(gl::ARRAY_BUFFER, gl::STATIC_DRAW);
+        // 4. bind VBO and populate
         vertex_buffer.bind();
         vertex_buffer.buffer_data(&vertices);
 
-        // set attribute layout
+        // 5. set VAO layout
         vertex_array.set_attr_layout::<f32>(attr_layout);
 
         Self {
@@ -92,9 +94,9 @@ impl Mesh {
     /// draws a mesh onto the framebuffer
     pub fn draw(&self) {
         // bind all appropriate buffers/arrays/programs
-        self.vertex_buffer.bind();
-        self.index_buffer.bind();
         self.vertex_array.bind();
+        self.index_buffer.bind();
+        self.vertex_buffer.bind();
         self.shader_program.r#use();
 
         unsafe {

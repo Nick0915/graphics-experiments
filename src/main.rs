@@ -59,6 +59,36 @@ fn main() {
     let mesh = Mesh::from_basic_obj(include_str!("../models/suzanne.obj"), shader_program);
     let mut suzanne = Model::from_default_transform(mesh);
 
+    let lines_vertices: Vec<f32> = vec![
+        //  x,    y,    z,
+         -1.0, -1.0,  1.0,  // 0: near-left
+          1.0, -1.0,  1.0,  // 1: near-right
+          1.0, -1.0, -1.0,  // 2: far-right
+         -1.0, -1.0, -1.0,  // 3: far-left
+    ];
+    let lines_layout: Vec<u32> = vec![3];
+    let lines_indices: Vec<u32> = vec![0, 1, 2, 3];
+
+    let mut lines_vertex_array = VAO::new(gl::FLOAT);
+    let mut lines_index_buffer = BufferObject::new(gl::ELEMENT_ARRAY_BUFFER, gl::STATIC_DRAW);
+    let mut lines_vertex_buffer = BufferObject::new(gl::ARRAY_BUFFER, gl::STATIC_DRAW);
+
+    lines_vertex_array.bind();
+
+    lines_index_buffer.bind();
+    lines_index_buffer.buffer_data(&lines_indices);
+
+    lines_vertex_buffer.bind();
+    lines_vertex_buffer.buffer_data(&lines_vertices);
+
+    lines_vertex_array.set_attr_layout::<f32>(lines_layout);
+
+    // generate VAO, VBO, EBO
+    // bind VAO
+    // bind EBO and populate
+    // bind VBO and populate
+    // set VAO layout
+
     // set clear (background) color and enable depth testing
     unsafe {
         gl::ClearColor(
@@ -106,8 +136,8 @@ fn main() {
         // suzanne.rotate(glam::Vec3::Y, util::deg2rad(15.) * delta);
 
         // get model-view-projection matrix from camera, upload it as uniform
-        // let mut mvp = camera.projection() * camera.view();
-        let mut mvp = camera.projection() * camera.view() * suzanne.model();
+        let mut mvp = camera.projection() * camera.view();
+        // let mut mvp = camera.projection() * camera.view() * suzanne.model();
         shader_program.uniform_matrix4f("u_MVP", &mvp.to_cols_array()[0]);
 
         unsafe {
@@ -116,6 +146,12 @@ fn main() {
 
             // draw model
             suzanne.draw();
+
+            lines_vertex_array.bind();
+            lines_index_buffer.bind();
+            lines_vertex_buffer.bind();
+            gl::DrawElements(gl::LINES, 4, gl::UNSIGNED_INT, std::ptr::null());
+            gl::DrawArrays(gl::TRIANGLES, 0, 3);
         }
 
         // present the newly drawn frame
