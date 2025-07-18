@@ -93,6 +93,8 @@ impl Window {
                     unsafe {
                         gl::Viewport(0, 0, new_width, new_height);
                     }
+
+                    input::framebuffer_size_callback(&mut self.window_handle, new_width, new_height, input_state);
                 }
 
                 // mouse buttons

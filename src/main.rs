@@ -38,7 +38,7 @@ fn main() {
     let mut window = window::Window::new();
     let mut input_state = input::InputState::new();
     let mut camera = camera::FocusCamera3D::new(
-        (0., 0., 10.),   // camera pos
+        (0., 3., 10.),   // camera pos
         (0., 1.5, 0.),   // lookAt pos
         util::deg2rad(50.), // vertical fov
         (
@@ -125,6 +125,7 @@ fn main() {
         window.process_input(&mut input_state);
 
         // use inputs to update camera
+        camera.update_aspect(input_state.aspect);
         camera.zoom(input_state.vertical_scroll);
         camera.r#move(
             (

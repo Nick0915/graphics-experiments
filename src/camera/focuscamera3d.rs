@@ -51,6 +51,10 @@ impl FocusCamera3D {
         }
     }
 
+    pub fn update_aspect(&mut self, new_aspect: (u32, u32)) {
+        self.aspect = (new_aspect.0 as f32, new_aspect.1 as f32);
+    }
+
     /// zooms the camera by the given amount
     pub fn zoom(&mut self, amt: f32) {
         // not multiplied by delta time because zooming is a discrete "teleport"-

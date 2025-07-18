@@ -107,3 +107,12 @@ pub fn key_callback(
         _ => {}
     }
 }
+
+pub fn framebuffer_size_callback(
+    window_handle: &mut PWindow,
+    new_width: i32,
+    new_height: i32,
+    input_state: &mut InputState,
+) {
+    input_state.aspect = (new_width as u32, new_height as u32);
+}

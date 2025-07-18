@@ -1,3 +1,5 @@
+use crate::constants;
+
 /// contains all relevant input actions that happened this frame
 pub struct InputState {
     pub mouse_pos: (f32, f32),
@@ -7,6 +9,7 @@ pub struct InputState {
     pub vertical_scroll: f32,
     pub wasd_vec: (f32, f32),
     pub space_crouch: f32,
+    pub aspect: (u32, u32)
 }
 
 impl InputState {
@@ -18,7 +21,8 @@ impl InputState {
             is_dragging: false,
             vertical_scroll: 0.,
             wasd_vec: (0., 0.),
-            space_crouch: 0.
+            space_crouch: 0.,
+            aspect: constants::WINDOW_SIZE,
         }
     }
 
