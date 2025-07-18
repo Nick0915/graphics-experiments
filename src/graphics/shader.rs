@@ -131,15 +131,18 @@ impl ShaderProgram {
     }
 
     /// gets the location of a uniform in the program given its name
-    fn get_uniform_loc(&self, uniform_name: &str) -> i32 {
+    pub fn get_uniform_loc(id: u32, uniform_name: &str) -> i32 {
         // must be using the program currently or this fails
-        self.r#use();
+        // self.r#use();
+        unsafe {
+            gl::UseProgram(id);
+        }
 
         let name = CString::new(uniform_name).unwrap();
         let mut uniform_location: i32 = 0;
 
         unsafe {
-            uniform_location = gl::GetUniformLocation(self.id, name.as_ptr());
+            uniform_location = gl::GetUniformLocation(id, name.as_ptr());
         }
 
         // unfortunate case: when we can't find the uniform
@@ -155,7 +158,7 @@ impl ShaderProgram {
     pub fn uniform1f(&self, uniform_name: &str, value: f32) {
         unsafe {
             self.r#use();
-            let loc = self.get_uniform_loc(uniform_name);
+            let loc = Self::get_uniform_loc(self.id, uniform_name);
             gl::Uniform1f(loc, value);
         }
     }
@@ -164,7 +167,7 @@ impl ShaderProgram {
     pub fn uniform2f(&self, uniform_name: &str, values: (f32, f32)) {
         unsafe {
             self.r#use();
-            let loc = self.get_uniform_loc(uniform_name);
+            let loc = Self::get_uniform_loc(self.id, uniform_name);
             gl::Uniform2f(loc, values.0, values.1);
         }
     }
@@ -175,7 +178,7 @@ impl ShaderProgram {
     pub fn uniform_matrix4f(&self, uniform_name: &str, matrix_ptr: &f32) {
         unsafe {
             self.r#use();
-            let loc = self.get_uniform_loc(uniform_name);
+            let loc = Self::get_uniform_loc(self.id, uniform_name);
             gl::UniformMatrix4fv(loc, 1, gl::FALSE, matrix_ptr);
         }
     }

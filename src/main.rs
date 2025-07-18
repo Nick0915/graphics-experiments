@@ -6,7 +6,7 @@ use glfw::ffi::glfwGetTime;
 use log;
 use std::{self, thread::current, io::Write};
 
-use crate::{graphics::{shader, BufferObject, Mesh, VAO}, model::Model};
+use crate::{graphics::*, model::Model};
 
 mod camera;
 mod constants;
@@ -14,8 +14,6 @@ mod graphics;
 mod input;
 mod util;
 mod window;
-mod model;
-mod grid;
 
 fn main() {
     // initialize logging
@@ -40,7 +38,7 @@ fn main() {
     let mut window = window::Window::new();
     let mut input_state = input::InputState::new();
     let mut camera = camera::FocusCamera3D::new(
-        (0., 0., 5.),   // camera pos
+        (0., 0., 10.),   // camera pos
         (0., 0., 0.),   // lookAt pos
         util::deg2rad(40.), // vertical fov
         (
@@ -58,30 +56,35 @@ fn main() {
     // create mesh
     let mesh = Mesh::from_basic_obj(include_str!("../models/suzanne.obj"), shader_program);
     let mut suzanne = Model::from_default_transform(mesh);
+    suzanne.translate(glam::Vec3::new(0., 2., 0.));
 
-    let lines_vertices: Vec<f32> = vec![
-        //  x,    y,    z,
-         -1.0, -1.0,  1.0,  // 0: near-left
-          1.0, -1.0,  1.0,  // 1: near-right
-          1.0, -1.0, -1.0,  // 2: far-right
-         -1.0, -1.0, -1.0,  // 3: far-left
-    ];
-    let lines_layout: Vec<u32> = vec![3];
-    let lines_indices: Vec<u32> = vec![0, 1, 2, 3];
+    // create grid
+    let grid = Grid10x10::new(1., 0.);
+    grid.generate_mvps();
 
-    let mut lines_vertex_array = VAO::new(gl::FLOAT);
-    let mut lines_index_buffer = BufferObject::new(gl::ELEMENT_ARRAY_BUFFER, gl::STATIC_DRAW);
-    let mut lines_vertex_buffer = BufferObject::new(gl::ARRAY_BUFFER, gl::STATIC_DRAW);
+    // let lines_vertices: Vec<f32> = vec![
+    //     //  x,    y,    z,
+    //      -1.0, -1.0,  1.0,  // 0: near-left
+    //       1.0, -1.0,  1.0,  // 1: near-right
+    //       1.0, -1.0, -1.0,  // 2: far-right
+    //      -1.0, -1.0, -1.0,  // 3: far-left
+    // ];
+    // let lines_layout: Vec<u32> = vec![3];
+    // let lines_indices: Vec<u32> = vec![0, 1, 2, 3];
 
-    lines_vertex_array.bind();
+    // let mut lines_vertex_array = VAO::new(gl::FLOAT);
+    // let mut lines_index_buffer = BufferObject::new(gl::ELEMENT_ARRAY_BUFFER, gl::STATIC_DRAW);
+    // let mut lines_vertex_buffer = BufferObject::new(gl::ARRAY_BUFFER, gl::STATIC_DRAW);
 
-    lines_index_buffer.bind();
-    lines_index_buffer.buffer_data(&lines_indices);
+    // lines_vertex_array.bind();
 
-    lines_vertex_buffer.bind();
-    lines_vertex_buffer.buffer_data(&lines_vertices);
+    // lines_index_buffer.bind();
+    // lines_index_buffer.buffer_data(&lines_indices);
 
-    lines_vertex_array.set_attr_layout::<f32>(lines_layout);
+    // lines_vertex_buffer.bind();
+    // lines_vertex_buffer.buffer_data(&lines_vertices);
+
+    // lines_vertex_array.set_attr_layout::<f32>(lines_layout);
 
     // generate VAO, VBO, EBO
     // bind VAO
@@ -135,23 +138,21 @@ fn main() {
         // update model rotation
         // suzanne.rotate(glam::Vec3::Y, util::deg2rad(15.) * delta);
 
-        // get model-view-projection matrix from camera, upload it as uniform
-        let mut mvp = camera.projection() * camera.view();
-        // let mut mvp = camera.projection() * camera.view() * suzanne.model();
-        shader_program.uniform_matrix4f("u_MVP", &mvp.to_cols_array()[0]);
-
         unsafe {
             // clear last frame
             gl::Clear(gl::COLOR_BUFFER_BIT | gl::DEPTH_BUFFER_BIT);
 
-            // draw model
-            suzanne.draw();
+            // draw grid
+            grid.draw(&camera);
 
-            lines_vertex_array.bind();
-            lines_index_buffer.bind();
-            lines_vertex_buffer.bind();
-            gl::DrawElements(gl::LINES, 4, gl::UNSIGNED_INT, std::ptr::null());
-            gl::DrawArrays(gl::TRIANGLES, 0, 3);
+            // draw model
+            suzanne.draw(&camera);
+
+            // lines_vertex_array.bind();
+            // lines_index_buffer.bind();
+            // lines_vertex_buffer.bind();
+            // gl::DrawElements(gl::LINES, 4, gl::UNSIGNED_INT, std::ptr::null());
+            // gl::DrawArrays(gl::TRIANGLES, 0, 3);
         }
 
         // present the newly drawn frame

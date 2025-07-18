@@ -1,5 +1,4 @@
-use crate::*;
-
+use crate::{graphics::Drawable, *};
 /// wrapper around the objects needed to draw a mesh for OpenGL
 /// specifically, uses the glDrawElements with GL_TRIANGLES
 pub struct Mesh {
@@ -9,6 +8,7 @@ pub struct Mesh {
     num_indices: usize,
     shader_program: graphics::ShaderProgram,
 }
+
 
 impl Mesh {
     /// builds a mesh from a list of vertices, indices, an attribute layout scheme, and a shader program
@@ -89,6 +89,21 @@ impl Mesh {
 
         // we have created a list of vertices and indices, so pass it to the other function
         Self::from_list(vertices, vec![3], indices, shader_program)
+    }
+
+    /// updates a uniform in this mesh's shader program: mat4
+    pub fn uniform_matrix4f(&self, uniform_name: &str, matrix_ptr: &f32) {
+        self.shader_program.uniform_matrix4f(uniform_name, matrix_ptr);
+    }
+
+    /// updates a uniform in this mesh's shader program: float
+    pub fn uniform1f(&self, uniform_name: &str, value: f32) {
+        self.shader_program.uniform1f(uniform_name, value);
+    }
+
+    /// updates a uniform in the this mesh's shader program: vec2
+    pub fn uniform2f(&self, uniform_name: &str, values: (f32, f32)) {
+        self.shader_program.uniform2f(uniform_name, values);
     }
 
     /// draws a mesh onto the framebuffer

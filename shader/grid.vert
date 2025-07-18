@@ -8,7 +8,7 @@ out vec3 vert_color;
 
 void main() {
     gl_Position = u_MVP * vec4(position, 1.f);
-    vert_color = vec3(position);
+    vert_color = vec3(1.f, 1.f, 1.f);
 }
 
 

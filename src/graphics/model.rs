@@ -1,4 +1,4 @@
-use crate::graphics::*;
+use crate::{camera::{Camera, FocusCamera3D}, graphics::*};
 
 use glam::*;
 
@@ -7,6 +7,17 @@ pub struct Model {
     translation: Vec3,
     scale: Vec3,
     rotation: Quat,
+}
+
+impl Drawable for Model {
+    // draws this model's mesh
+    fn draw<T: Camera>(&self, camera: &T) {
+        // get model-view-projection matrix from camera, upload it as uniform
+        let mut mvp = camera.projection_mat() * camera.view_mat() * self.model_mat();
+        self.mesh.uniform_matrix4f("u_MVP", &mvp.to_cols_array()[0]);
+
+        self.mesh.draw();
+    }
 }
 
 impl Model {
@@ -20,18 +31,18 @@ impl Model {
     }
 
     /// gets the model matrix of this model
-    pub fn model(&self) -> Mat4 {
+    pub fn model_mat(&self) -> Mat4 {
         Mat4::from_scale_rotation_translation(self.scale, self.rotation, self.translation)
     }
 
-    // rotate this model by given axis-angle
+    /// rotate this model by given axis-angle
     pub fn rotate(&mut self, axis: Vec3, amount: f32) {
         let new_rotation = Quat::from_axis_angle(axis, amount);
         self.rotation *= new_rotation;
     }
 
-    // draws this model's mesh
-    pub fn draw(&self) {
-        self.mesh.draw();
+    /// translate this model by given amount
+    pub fn translate(&mut self, translation: Vec3) {
+        self.translation += translation;
     }
 }

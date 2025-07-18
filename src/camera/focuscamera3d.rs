@@ -13,7 +13,25 @@ pub struct FocusCamera3D {
 
 use log::info;
 
-use crate::*;
+use crate::{camera::Camera, *};
+
+impl Camera for FocusCamera3D {
+    /// gets the view matrix of the camera
+    fn view_mat(&self) -> glam::Mat4 {
+        glam::Mat4::look_at_rh(self.eye, self.target, glam::Vec3::Y)
+    }
+
+    /// gets the projection matrix of the camera
+    fn projection_mat(&self) -> glam::Mat4 {
+        glam::Mat4::perspective_rh_gl(
+            self.fov_y,
+            self.aspect.0 / self.aspect.1,
+            self.z_clip.0,
+            self.z_clip.1,
+        )
+    }
+
+}
 
 impl FocusCamera3D {
     /// creates a camera
@@ -31,21 +49,6 @@ impl FocusCamera3D {
             aspect,
             z_clip,
         }
-    }
-
-    /// gets the view matrix of the camera
-    pub fn view(&self) -> glam::Mat4 {
-        glam::Mat4::look_at_rh(self.eye, self.target, glam::Vec3::Y)
-    }
-
-    /// gets the projection matrix of the camera
-    pub fn projection(&self) -> glam::Mat4 {
-        glam::Mat4::perspective_rh_gl(
-            self.fov_y,
-            self.aspect.0 / self.aspect.1,
-            self.z_clip.0,
-            self.z_clip.1,
-        )
     }
 
     /// zooms the camera by the given amount
