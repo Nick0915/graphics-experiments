@@ -57,7 +57,7 @@ fn main() {
     let mut model_pre = 0.;
     let mut model_post = 0.;
     unsafe { model_pre = glfwGetTime(); }
-    let mesh = Mesh::from_obj(include_str!("../models/suzanne_nontrivial.obj"), shader_program);
+    let mesh = Mesh::from_obj(include_str!("../models/suzanne_full.obj"), shader_program);
     unsafe { model_post = glfwGetTime(); }
     log::info!("took {:.2} ms to load", (model_post - model_pre) * 1000.);
 

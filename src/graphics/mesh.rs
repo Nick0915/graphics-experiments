@@ -11,14 +11,19 @@ pub struct Mesh {
     shader_program: graphics::ShaderProgram,
 }
 
-
 impl Mesh {
     /// builds a mesh from a list of vertices, indices, an attribute layout scheme, and a shader program
-    pub fn from_list(vertices: Vec<f32>, attr_layout: Vec<u32>, indices: Vec<u32>, shader_program: graphics::ShaderProgram) -> Self {
+    pub fn from_list(
+        vertices: Vec<f32>,
+        attr_layout: Vec<u32>,
+        indices: Vec<u32>,
+        shader_program: graphics::ShaderProgram,
+    ) -> Self {
         // 1. create VAO, VBO, IBO
         let mut vertex_array = graphics::VAO::new(gl::FLOAT);
         let mut vertex_buffer = graphics::BufferObject::new(gl::ARRAY_BUFFER, gl::STATIC_DRAW);
-        let mut index_buffer = graphics::BufferObject::new(gl::ELEMENT_ARRAY_BUFFER, gl::STATIC_DRAW);
+        let mut index_buffer =
+            graphics::BufferObject::new(gl::ELEMENT_ARRAY_BUFFER, gl::STATIC_DRAW);
 
         // 2. bind VAO
         vertex_array.bind();
@@ -55,6 +60,19 @@ impl Mesh {
 
         let mut num_vertices = 0;
 
+        if !{
+            let has_normals = obj.contains("vn");
+            has_normals
+        } {
+            normals.push((0., 0., 0.));
+        }
+        if !{
+            let has_texcoords = obj.contains("vt");
+            has_texcoords
+        } {
+            texcoords.push((0., 0.));
+        }
+
         for (line_no, line) in obj.lines().enumerate() {
             let mut tokens = line.split_whitespace();
             match tokens.next().unwrap() {
@@ -66,7 +84,7 @@ impl Mesh {
                     );
 
                     positions.push(position);
-                },
+                }
                 "vn" => {
                     let normal = (
                         tokens.next().unwrap().parse::<f32>().unwrap(),
@@ -75,7 +93,7 @@ impl Mesh {
                     );
 
                     normals.push(normal);
-                },
+                }
                 "vt" => {
                     let texcoord = (
                         tokens.next().unwrap().parse::<f32>().unwrap(),
@@ -83,7 +101,7 @@ impl Mesh {
                     );
 
                     texcoords.push(texcoord);
-                },
+                }
                 "f" => {
                     // cannot let the vector consume the iterator here because we
                     // need to borrow the iterator later to check if it's empty or not
@@ -91,53 +109,72 @@ impl Mesh {
                     for i in 1..(tokens.len() - 1) {
                         let token_set = vec![tokens[0], tokens[i], tokens[i + 1]];
                         for token in token_set {
-                            if token.contains('/') {
-                                let idxs = token.split('/').collect::<Vec<&str>>();
-                                let (pos_i, tex_i, norm_i) = (
-                                    idxs[0].parse::<u32>().unwrap() - 1,
-                                    idxs[1].parse::<u32>().unwrap() - 1,
-                                    idxs[2].parse::<u32>().unwrap() - 1,
-                                );
+                            let mut token = token.to_string();
 
-                                if !vertex_map.contains_key(&(pos_i, tex_i, norm_i)) {
-                                    vertex_map.insert((pos_i, tex_i, norm_i), num_vertices);
-                                    vertex_data.append(&mut vec![
-                                        positions[pos_i as usize].0,
-                                        positions[pos_i as usize].1,
-                                        positions[pos_i as usize].2,
-                                        texcoords[tex_i as usize].0,
-                                        texcoords[tex_i as usize].1,
-                                        normals[norm_i as usize].0,
-                                        normals[norm_i as usize].1,
-                                        normals[norm_i as usize].2,
-                                    ]);
-                                    num_vertices += 1;
-                                }
-
-                                indices.push(vertex_map[&(pos_i, tex_i, norm_i)]);
+                            // handle the omitted '/' case
+                            while token.chars().filter(|&c| c == '/').count() < 2 {
+                                token.push('/');
                             }
+
+                            let idxs = token.split('/').collect::<Vec<&str>>();
+                            let (pos_i, tex_i, norm_i) = (
+                                idxs[0].parse::<u32>().unwrap() - 1,
+                                // handle the omitted number case
+                                match idxs[1].parse::<u32>() {
+                                    Ok(num) => num - 1,
+                                    Err(_) => 0, // use the dummy 0 if the obj doesn't have texcoords
+                                },
+                                match idxs[2].parse::<u32>() {
+                                    Ok(num) => num - 1,
+                                    Err(_) => 0, // use the dummy if the obj doesn't have normals
+                                },
+                            );
+
+                            if !vertex_map.contains_key(&(pos_i, tex_i, norm_i)) {
+                                vertex_map.insert((pos_i, tex_i, norm_i), num_vertices);
+                                vertex_data.append(&mut vec![
+                                    positions[pos_i as usize].0,
+                                    positions[pos_i as usize].1,
+                                    positions[pos_i as usize].2,
+                                    texcoords[tex_i as usize].0,
+                                    texcoords[tex_i as usize].1,
+                                    normals[norm_i as usize].0,
+                                    normals[norm_i as usize].1,
+                                    normals[norm_i as usize].2,
+                                ]);
+                                num_vertices += 1;
+                            }
+
+                            indices.push(vertex_map[&(pos_i, tex_i, norm_i)]);
                         }
                     }
-                },
+                }
                 _ => {
                     // consume all the tokens in any ignored line so the later
                     // when we check for left-over tokens, we don't false positive
                     // on these ignored lines (e.g. comments, "o <object name>", etc
-                    while { match tokens.next() {
-                        Some(_) => true,
-                        None => false,
-                    } } {}
-                },
+                    while {
+                        match tokens.next() {
+                            Some(_) => true,
+                            None => false,
+                        }
+                    } {}
+                }
             }
 
             match tokens.next() {
                 Some(tok) => {
                     let mut leftover = tokens.collect::<Vec<&str>>();
                     leftover.insert(0, tok);
-                    log::error!("Left over token(s) when parsing line {} (\"{}\"): {:?}", line_no + 1, line, leftover);
+                    log::error!(
+                        "Left over token(s) when parsing line {} (\"{}\"): {:?}",
+                        line_no + 1,
+                        line,
+                        leftover
+                    );
                     panic!();
-                },
-                None => {},
+                }
+                None => {}
             }
         }
 
@@ -188,30 +225,24 @@ impl Mesh {
                 'v' => {
                     for token in line.split_whitespace() {
                         match token.parse::<f32>() {
-                            Ok(coord) => {
-                                vertices.push(coord)
-                            },
-                            _ => {},
+                            Ok(coord) => vertices.push(coord),
+                            _ => {}
                         }
                     }
-                },
+                }
                 // triangle/face (3 indices: v1, v2, v3)
                 'f' => {
                     for token in line.split_whitespace() {
                         match token.parse::<u32>() {
-                            Ok(index) => {
-                                indices.push(index - 1)
-                            },
-                            _ => {},
+                            Ok(index) => indices.push(index - 1),
+                            _ => {}
                         }
                     }
-                },
-                // object name
-                'o' => {
-                    obj_name = line.split_whitespace().nth(1).unwrap().to_string()
                 }
+                // object name
+                'o' => obj_name = line.split_whitespace().nth(1).unwrap().to_string(),
                 // comment (ignore this line)
-                '#' | _ => {},
+                '#' | _ => {}
             }
         }
 
@@ -221,7 +252,8 @@ impl Mesh {
 
     /// updates a uniform in this mesh's shader program: mat4
     pub fn uniform_matrix4f(&self, uniform_name: &str, matrix_ptr: &f32) {
-        self.shader_program.uniform_matrix4f(uniform_name, matrix_ptr);
+        self.shader_program
+            .uniform_matrix4f(uniform_name, matrix_ptr);
     }
 
     /// updates a uniform in this mesh's shader program: float
@@ -243,7 +275,12 @@ impl Mesh {
         self.shader_program.r#use();
 
         unsafe {
-            gl::DrawElements(gl::TRIANGLES, self.num_indices as i32, gl::UNSIGNED_INT, std::ptr::null());
+            gl::DrawElements(
+                gl::TRIANGLES,
+                self.num_indices as i32,
+                gl::UNSIGNED_INT,
+                std::ptr::null(),
+            );
         }
     }
 }
