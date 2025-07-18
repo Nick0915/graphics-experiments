@@ -12,13 +12,29 @@ pub struct Grid10x10 {
     shader_program: ShaderProgram,
     vertex_array: VAO,
     vertex_buffer: BufferObject,
+    model_mats_updated: bool,
 }
 
 impl Drawable for Grid10x10 {
-    fn draw<T: Camera>(&self, camera: &T) {
-        let mut mvp = camera.projection_mat() * camera.view_mat();
-        self.shader_program
-            .uniform_matrix4f("u_MVP", &mvp.to_cols_array()[0]);
+    fn draw<T: Camera>(&mut self, camera: &T) {
+        let proj_view = camera.projection_mat() * camera.view_mat();
+
+        let num_insts = (Self::NUM_HORIZ_LINES + Self::NUM_VERT_LINES) as usize;
+
+        if !self.model_mats_updated {
+            let models = self.generate_model_matrices();
+            for inst_id in 0..num_insts {
+                let model = models[inst_id as usize % models.len()];
+
+                self.shader_program
+                    .uniform_matrix4f(format!("u_model[{}]", inst_id).as_str(), &model.to_cols_array()[0]);
+            }
+
+            self.model_mats_updated = true;
+        }
+
+        let proj_view = camera.projection_mat() * camera.view_mat();
+        self.shader_program.uniform_matrix4f("u_proj_view", &proj_view.to_cols_array()[0]);
 
         // bind all appropriate buffers/arrays/programs
         self.vertex_array.bind();
@@ -27,7 +43,7 @@ impl Drawable for Grid10x10 {
 
         // todo!()
         unsafe {
-            gl::DrawArrays(gl::LINES, 0, 2);
+            gl::DrawArraysInstanced(gl::LINES, 0, 2, num_insts as i32);
         }
     }
 }
@@ -66,63 +82,49 @@ impl Grid10x10 {
             spacing,
             height,
             shader_program: ShaderProgram::new(
-                include_str!("../../shader/grid.vert"),
+                include_str!("../../shader/grid10x10.vert"),
                 include_str!("../../shader/main.frag"),
             ),
             vertex_array,
             vertex_buffer,
+            model_mats_updated: false,
         }
     }
 
-    const NUM_HORIZ_LINES: i32 = 10;
-    const NUM_VERT_LINES: i32 = 10;
+    const NUM_HORIZ_LINES: i32 = 11;
+    const NUM_VERT_LINES: i32 = 11;
 
-    pub fn generate_mvps(&self) -> Vec<glam::Mat4> {
-        let mut mvps: Vec<glam::Mat4> = Vec::new();
+    pub fn generate_model_matrices(&self) -> Vec<glam::Mat4> {
+        let mut mats: Vec<glam::Mat4> = Vec::new();
 
-        let horiz_len = (Self::NUM_VERT_LINES - 1) as f32;
-        let vert_len = (Self::NUM_HORIZ_LINES - 1) as f32;
+        let width = (Self::NUM_VERT_LINES - 1) as f32 * self.spacing;
+        let height = (Self::NUM_HORIZ_LINES - 1) as f32 * self.spacing;
 
-        for i in 0..Self::NUM_HORIZ_LINES {
-            let x_start = (i - Self::NUM_HORIZ_LINES / 2) as f32;
-            let y_start = (-Self::NUM_HORIZ_LINES / 2) as f32;
+        // horizontal lines
+        for j in 0..(Self::NUM_HORIZ_LINES) {
+            let t = j as f32 / (Self::NUM_HORIZ_LINES - 1) as f32;
 
-            let mat = glam::Mat4::from_scale_rotation_translation(
-                Vec3::new(self.spacing, 0., self.spacing),
+            let x_start = - width / 2.;
+            let x_end = width / 2.;
+            let y = f32::lerp(-height / 2., height / 2., t);
+
+            let line_size = x_end - x_start;
+
+            let horiz_mat = glam::Mat4::from_scale_rotation_translation(
+                Vec3::new(line_size, 0., 1.),
                 Quat::IDENTITY,
-                Vec3::new(x_start, 0., y_start),
+                Vec3::new(x_start, 0., y),
             );
-
-            mvps.push(mat);
-            println!(
-                "Horizontal line ({}, 0, {}) to ({}, 0, {})",
-                x_start * self.spacing,
-                y_start,
-                (x_start + 1.) * self.spacing,
-                y_start
-            );
-        }
-
-        for j in 0..Self::NUM_HORIZ_LINES {
-            let x_start = (-Self::NUM_VERT_LINES / 2) as f32;
-            let y_start = (j - Self::NUM_VERT_LINES / 2) as f32;
-
-            let mat = glam::Mat4::from_scale_rotation_translation(
-                Vec3::new(self.spacing, 0., self.spacing),
+            let vert_mat = glam::Mat4::from_scale_rotation_translation(
+                Vec3::new(line_size, 0., 1.),
                 Quat::from_axis_angle(Vec3::Y, util::deg2rad(90.)),
-                Vec3::new(x_start, 0., y_start),
+                Vec3::new(y, 0., x_start + height),
             );
 
-            mvps.push(mat);
-            println!(
-                "Vertical line ({}, 0, {}) to ({}, 0, {})",
-                x_start,
-                y_start * self.spacing,
-                x_start,
-                (y_start + 1.) * self.spacing,
-            );
+            mats.push(horiz_mat);
+            mats.push(vert_mat);
         }
 
-        mvps
+        mats
     }
 }

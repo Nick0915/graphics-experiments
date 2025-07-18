@@ -39,8 +39,8 @@ fn main() {
     let mut input_state = input::InputState::new();
     let mut camera = camera::FocusCamera3D::new(
         (0., 0., 10.),   // camera pos
-        (0., 0., 0.),   // lookAt pos
-        util::deg2rad(40.), // vertical fov
+        (0., 1.5, 0.),   // lookAt pos
+        util::deg2rad(50.), // vertical fov
         (
             constants::WINDOW_SIZE.0 as f32,
             constants::WINDOW_SIZE.1 as f32,
@@ -56,11 +56,11 @@ fn main() {
     // create mesh
     let mesh = Mesh::from_basic_obj(include_str!("../models/suzanne.obj"), shader_program);
     let mut suzanne = Model::from_default_transform(mesh);
-    suzanne.translate(glam::Vec3::new(0., 2., 0.));
+    suzanne.translate(glam::Vec3::new(0., 1.5, 0.));
 
     // create grid
-    let grid = Grid10x10::new(1., 0.);
-    grid.generate_mvps();
+    let mut grid = Grid10x10::new(1., 0.);
+    // grid.generate_mvps();
 
     // let lines_vertices: Vec<f32> = vec![
     //     //  x,    y,    z,
@@ -112,7 +112,7 @@ fn main() {
     let mut delta = 0.;
 
     // fps stuff
-    let framerate_update_interval = 0.25;
+    let framerate_update_interval = 0.50;
     let mut framerate_update_timer = framerate_update_interval;
     let mut num_frames_in_interval = 0;
 

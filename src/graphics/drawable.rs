@@ -1,5 +1,5 @@
 use crate::camera::Camera;
 
 pub trait Drawable {
-    fn draw<T: Camera>(&self, camera: &T);
+    fn draw<T: Camera>(&mut self, camera: &T);
 }

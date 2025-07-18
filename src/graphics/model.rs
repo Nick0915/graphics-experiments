@@ -11,7 +11,7 @@ pub struct Model {
 
 impl Drawable for Model {
     // draws this model's mesh
-    fn draw<T: Camera>(&self, camera: &T) {
+    fn draw<T: Camera>(&mut self, camera: &T) {
         // get model-view-projection matrix from camera, upload it as uniform
         let mut mvp = camera.projection_mat() * camera.view_mat() * self.model_mat();
         self.mesh.uniform_matrix4f("u_MVP", &mvp.to_cols_array()[0]);
