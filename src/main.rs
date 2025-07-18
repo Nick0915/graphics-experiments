@@ -54,43 +54,18 @@ fn main() {
     let shader_program = graphics::ShaderProgram::new(vertex_source, fragment_source);
 
     // create mesh
-    let mesh = Mesh::from_basic_obj(include_str!("../models/suzanne.obj"), shader_program);
+    let mut model_pre = 0.;
+    let mut model_post = 0.;
+    unsafe { model_pre = glfwGetTime(); }
+    let mesh = Mesh::from_obj(include_str!("../models/suzanne_nontrivial.obj"), shader_program);
+    unsafe { model_post = glfwGetTime(); }
+    log::info!("took {:.2} ms to load", (model_post - model_pre) * 1000.);
+
     let mut suzanne = Model::from_default_transform(mesh);
     suzanne.translate(glam::Vec3::new(0., 1.5, 0.));
 
     // create grid
     let mut grid = SquareGrid::new(25, 1., 0.);
-    // grid.generate_mvps();
-
-    // let lines_vertices: Vec<f32> = vec![
-    //     //  x,    y,    z,
-    //      -1.0, -1.0,  1.0,  // 0: near-left
-    //       1.0, -1.0,  1.0,  // 1: near-right
-    //       1.0, -1.0, -1.0,  // 2: far-right
-    //      -1.0, -1.0, -1.0,  // 3: far-left
-    // ];
-    // let lines_layout: Vec<u32> = vec![3];
-    // let lines_indices: Vec<u32> = vec![0, 1, 2, 3];
-
-    // let mut lines_vertex_array = VAO::new(gl::FLOAT);
-    // let mut lines_index_buffer = BufferObject::new(gl::ELEMENT_ARRAY_BUFFER, gl::STATIC_DRAW);
-    // let mut lines_vertex_buffer = BufferObject::new(gl::ARRAY_BUFFER, gl::STATIC_DRAW);
-
-    // lines_vertex_array.bind();
-
-    // lines_index_buffer.bind();
-    // lines_index_buffer.buffer_data(&lines_indices);
-
-    // lines_vertex_buffer.bind();
-    // lines_vertex_buffer.buffer_data(&lines_vertices);
-
-    // lines_vertex_array.set_attr_layout::<f32>(lines_layout);
-
-    // generate VAO, VBO, EBO
-    // bind VAO
-    // bind EBO and populate
-    // bind VBO and populate
-    // set VAO layout
 
     // set clear (background) color and enable depth testing
     unsafe {

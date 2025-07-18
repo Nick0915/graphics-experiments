@@ -1,3 +1,5 @@
+use std::collections::{HashMap, HashSet};
+
 use crate::{graphics::Drawable, *};
 /// wrapper around the objects needed to draw a mesh for OpenGL
 /// specifically, uses the glDrawElements with GL_TRIANGLES
@@ -41,10 +43,136 @@ impl Mesh {
         }
     }
 
+    /// parses an OBJ file and returns a vertex buffer object and index buffer object
+    pub fn from_obj(obj: &str, shader_program: ShaderProgram) -> Self {
+        let mut positions = Vec::new();
+        let mut texcoords = Vec::new();
+        let mut normals = Vec::new();
+
+        let mut vertex_data: Vec<f32> = Vec::new();
+        let mut vertex_map: HashMap<(u32, u32, u32), u32> = HashMap::new();
+        let mut indices: Vec<u32> = Vec::new();
+
+        let mut num_vertices = 0;
+
+        for (line_no, line) in obj.lines().enumerate() {
+            let mut tokens = line.split_whitespace();
+            match tokens.next().unwrap() {
+                "v" => {
+                    let position = (
+                        tokens.next().unwrap().parse::<f32>().unwrap(),
+                        tokens.next().unwrap().parse::<f32>().unwrap(),
+                        tokens.next().unwrap().parse::<f32>().unwrap(),
+                    );
+
+                    positions.push(position);
+                },
+                "vn" => {
+                    let normal = (
+                        tokens.next().unwrap().parse::<f32>().unwrap(),
+                        tokens.next().unwrap().parse::<f32>().unwrap(),
+                        tokens.next().unwrap().parse::<f32>().unwrap(),
+                    );
+
+                    normals.push(normal);
+                },
+                "vt" => {
+                    let texcoord = (
+                        tokens.next().unwrap().parse::<f32>().unwrap(),
+                        tokens.next().unwrap().parse::<f32>().unwrap(),
+                    );
+
+                    texcoords.push(texcoord);
+                },
+                "f" => {
+                    // cannot let the vector consume the iterator here because we
+                    // need to borrow the iterator later to check if it's empty or not
+                    let tokens = tokens.by_ref().collect::<Vec<&str>>();
+                    for i in 1..(tokens.len() - 1) {
+                        let token_set = vec![tokens[0], tokens[i], tokens[i + 1]];
+                        for token in token_set {
+                            if token.contains('/') {
+                                let idxs = token.split('/').collect::<Vec<&str>>();
+                                let (pos_i, tex_i, norm_i) = (
+                                    idxs[0].parse::<u32>().unwrap() - 1,
+                                    idxs[1].parse::<u32>().unwrap() - 1,
+                                    idxs[2].parse::<u32>().unwrap() - 1,
+                                );
+
+                                if !vertex_map.contains_key(&(pos_i, tex_i, norm_i)) {
+                                    vertex_map.insert((pos_i, tex_i, norm_i), num_vertices);
+                                    vertex_data.append(&mut vec![
+                                        positions[pos_i as usize].0,
+                                        positions[pos_i as usize].1,
+                                        positions[pos_i as usize].2,
+                                        texcoords[tex_i as usize].0,
+                                        texcoords[tex_i as usize].1,
+                                        normals[norm_i as usize].0,
+                                        normals[norm_i as usize].1,
+                                        normals[norm_i as usize].2,
+                                    ]);
+                                    num_vertices += 1;
+                                }
+
+                                indices.push(vertex_map[&(pos_i, tex_i, norm_i)]);
+                            }
+                        }
+                    }
+                },
+                _ => {
+                    // consume all the tokens in any ignored line so the later
+                    // when we check for left-over tokens, we don't false positive
+                    // on these ignored lines (e.g. comments, "o <object name>", etc
+                    while { match tokens.next() {
+                        Some(_) => true,
+                        None => false,
+                    } } {}
+                },
+            }
+
+            match tokens.next() {
+                Some(tok) => {
+                    let mut leftover = tokens.collect::<Vec<&str>>();
+                    leftover.insert(0, tok);
+                    log::error!("Left over token(s) when parsing line {} (\"{}\"): {:?}", line_no + 1, line, leftover);
+                    panic!();
+                },
+                None => {},
+            }
+        }
+
+        // 1. create VAO, VBO, IBO
+        let mut vertex_array = VAO::new(gl::FLOAT);
+        let mut vertex_buffer = BufferObject::new(gl::ARRAY_BUFFER, gl::STATIC_DRAW);
+        let mut index_buffer = BufferObject::new(gl::ELEMENT_ARRAY_BUFFER, gl::STATIC_DRAW);
+
+        // 2. bind VAO
+        vertex_array.bind();
+
+        // 3. bind IBO and populate
+        index_buffer.bind();
+        index_buffer.buffer_data(&indices);
+
+        // 4. bind VBO and populate
+        vertex_buffer.bind();
+        vertex_buffer.buffer_data(&vertex_data);
+
+        // 5. set VAO layout
+        vertex_array.set_attr_layout::<f32>(vec![3, 2, 3]); // vec3 pos, vec2 texcoord, vec3 normal
+
+        Self {
+            vertex_array,
+            vertex_buffer,
+            index_buffer,
+            num_indices: indices.len(),
+            shader_program,
+        }
+    }
+
     /// creates a mesh from a waveform .obj style string (NOT A FILE)
     ///
-    /// currently only works with waveform schemes that only contains vertices and
-    /// triangle faces (no UVs, colors, normals, etc., quads)
+    /// currently only works with wavefront schemes that only contains vertices and
+    /// triangle faces (no UVs, normals, etc., quads)
     pub fn from_basic_obj(obj: &str, shader_program: graphics::ShaderProgram) -> Self {
         // will buffer in the values to these vectors
         let mut vertices: Vec<f32> = Vec::new();
