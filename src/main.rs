@@ -59,7 +59,7 @@ fn main() {
     suzanne.translate(glam::Vec3::new(0., 1.5, 0.));
 
     // create grid
-    let mut grid = Grid10x10::new(1., 0.);
+    let mut grid = SquareGrid::new(25, 1., 0.);
     // grid.generate_mvps();
 
     // let lines_vertices: Vec<f32> = vec![

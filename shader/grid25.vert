@@ -3,7 +3,7 @@
 layout (location = 0) in vec3 position;
 
 uniform mat4 u_proj_view;
-uniform mat4 u_model[22];
+uniform mat4 u_model[25 + 25 + 2];
 
 out vec3 vert_color;
 

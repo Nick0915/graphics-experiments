@@ -6,7 +6,8 @@ use crate::{
     util,
 };
 
-pub struct Grid10x10 {
+pub struct SquareGrid {
+    num_lines: u32,
     spacing: f32,
     height: f32,
     shader_program: ShaderProgram,
@@ -15,11 +16,12 @@ pub struct Grid10x10 {
     model_mats_updated: bool,
 }
 
-impl Drawable for Grid10x10 {
+impl Drawable for SquareGrid {
     fn draw<T: Camera>(&mut self, camera: &T) {
+
         let proj_view = camera.projection_mat() * camera.view_mat();
 
-        let num_insts = (Self::NUM_HORIZ_LINES + Self::NUM_VERT_LINES) as usize;
+        let num_insts = (2 * self.num_lines) as usize;
 
         if !self.model_mats_updated {
             let models = self.generate_model_matrices();
@@ -48,8 +50,8 @@ impl Drawable for Grid10x10 {
     }
 }
 
-impl Grid10x10 {
-    pub fn new(spacing: f32, height: f32) -> Self {
+impl SquareGrid {
+    pub fn new(num_lines: u32, spacing: f32, height: f32) -> Self {
         #[rustfmt::skip]
         let vertices: Vec<f32> = vec![
             // x,      y,   z
@@ -79,10 +81,11 @@ impl Grid10x10 {
         vertex_array.set_attr_layout::<f32>(attr_layout);
 
         Self {
+            num_lines,
             spacing,
             height,
             shader_program: ShaderProgram::new(
-                include_str!("../../shader/grid10x10.vert"),
+                include_str!("../../shader/grid25.vert"),
                 include_str!("../../shader/main.frag"),
             ),
             vertex_array,
@@ -91,18 +94,15 @@ impl Grid10x10 {
         }
     }
 
-    const NUM_HORIZ_LINES: i32 = 11;
-    const NUM_VERT_LINES: i32 = 11;
-
     pub fn generate_model_matrices(&self) -> Vec<glam::Mat4> {
         let mut mats: Vec<glam::Mat4> = Vec::new();
 
-        let width = (Self::NUM_VERT_LINES - 1) as f32 * self.spacing;
-        let height = (Self::NUM_HORIZ_LINES - 1) as f32 * self.spacing;
+        let width = (self.num_lines - 1) as f32 * self.spacing;
+        let height = (self.num_lines - 1) as f32 * self.spacing;
 
         // horizontal lines
-        for j in 0..(Self::NUM_HORIZ_LINES) {
-            let t = j as f32 / (Self::NUM_HORIZ_LINES - 1) as f32;
+        for j in 0..self.num_lines {
+            let t = j as f32 / (self.num_lines - 1) as f32;
 
             let x_start = - width / 2.;
             let x_end = width / 2.;
